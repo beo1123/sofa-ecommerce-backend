@@ -1,4 +1,3 @@
-// FILE: src/db/client.js
 const { Pool } = require('pg')
 const SQL = require('sql-template-strings')
 const env = require('../config/env')
@@ -11,10 +10,10 @@ const pool = new Pool({
   connectionTimeoutMillis: 5_000,
 })
 
-async function query(sql, params = []) {
+async function query(sql) {
   const start = Date.now()
   try {
-    const res = await pool.query(sql, params)
+    const res = await pool.query(sql)
     const ms = Date.now() - start
 
     if (ms > 200) {
@@ -22,7 +21,7 @@ async function query(sql, params = []) {
         {
           duration_ms: ms,
           rowCount: res.rowCount,
-          sql: sql.toString?.() || sql,
+          sql: sql.toString?.() || String(sql),
         },
         'Slow query'
       )
@@ -41,7 +40,7 @@ async function query(sql, params = []) {
     logger.error(
       {
         err,
-        sql: sql.toString?.() || sql,
+        sql: sql.toString?.() || String(sql),
       },
       'Query failed'
     )
@@ -49,25 +48,16 @@ async function query(sql, params = []) {
   }
 }
 
-/**
- * Run a function inside a DB transaction.
- *
- * Usage:
- *   return transaction(async (tx) => {
- *     await tx.query(...)
- *     await tx.query(...)
- *   })
- */
 async function transaction(fn) {
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
 
     const tx = {
-      query: async (sql, params = []) => {
+      query: async (sql) => {
         const start = Date.now()
         try {
-          const res = await client.query(sql, params)
+          const res = await client.query(sql)
           const ms = Date.now() - start
 
           if (ms > 200) {
@@ -75,7 +65,7 @@ async function transaction(fn) {
               {
                 duration_ms: ms,
                 rowCount: res.rowCount,
-                sql: sql.toString?.() || sql,
+                sql: sql.toString?.() || String(sql),
               },
               'Slow tx query'
             )
@@ -86,7 +76,7 @@ async function transaction(fn) {
           logger.error(
             {
               err,
-              sql: sql.toString?.() || sql,
+              sql: sql.toString?.() || String(sql),
             },
             'Tx query failed'
           )

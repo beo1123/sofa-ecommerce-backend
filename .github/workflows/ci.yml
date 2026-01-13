@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: app
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - run: npm install
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/app
+        run: bash migrate.sh
+
+      - name: Run tests
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/app
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test
+        run: npm test
