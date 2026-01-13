@@ -1,0 +1,60 @@
+{
+  "name": "sofa-ecommerce-backend",
+  "version": "1.0.0",
+  "description": "This is the backend for a sofa e-commerce application, built with Node.js, Express, and PostgreSQL",
+  "main": "index.js",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "migrate": "bash migrate.sh",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "jest --runInBand",
+    "prepare": "husky"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "bullmq": "^5.66.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "ioredis": "^5.9.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.16.3",
+    "pino": "^10.1.1",
+    "sql-template-strings": "^2.2.2",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-n": "^16.6.2",
+    "eslint-plugin-promise": "^6.6.0",
+    "glob": "^13.0.0",
+    "husky": "^9.1.7",
+    "jest": "^30.2.0",
+    "lint-staged": "^16.2.7",
+    "nodemon": "^3.1.11",
+    "prettier": "^3.7.4",
+    "rimraf": "^6.1.2",
+    "supertest": "^7.2.2"
+  },
+  "lint-staged": {
+    "**/*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "**/*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  }
+}
