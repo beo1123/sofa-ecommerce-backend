@@ -1,0 +1,14 @@
+# Server
+PORT=3000
+NODE_ENV=development
+
+# Database
+DATABASE_URL=postgres://sofa_db:quocbao1123@localhost:5434/sofa_db
+
+# JWT
+JWT_ACCESS_SECRET=your_secrect
+
+JWT_REFRESH_SECRET=your_secrect
+# (Tuỳ chọn, sau này dùng)
+JWT_ACCESS_TTL=15m
+JWT_REFRESH_TTL=7d
