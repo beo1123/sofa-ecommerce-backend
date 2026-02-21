@@ -7,6 +7,12 @@ import { RefreshTokenUseCase } from '../application/refresh-token.usecase.js';
 import { GetMeUseCase } from '../application/get-me.usecase.js';
 import { UpdateProfileUseCase } from '../application/update-profile.usecase.js';
 import { ChangePasswordUseCase } from '../application/change-password.usecase.js';
+import { CreateRoleUseCase } from '../application/create-role.usecase.js';
+import { AssignRoleUseCase } from '../application/assign-role.usecase.js';
+import { RemoveRoleUseCase } from '../application/remove-role.usecase.js';
+import { ListRolesUseCase } from '../application/list-roles.usecase.js';
+import { GetUserRolesUseCase } from '../application/get-user-roles.usecase.js';
+import { ListUsersUseCase } from '../application/list-users.usecase.js';
 import { ok } from '../../../shared/http/api-response.js';
 
 type AuthedRequest = Request & { user?: { sub: string; email: string } };
@@ -19,6 +25,12 @@ export class UserController extends BaseController {
     private readonly getMeUC: GetMeUseCase,
     private readonly updateProfileUC: UpdateProfileUseCase,
     private readonly changePasswordUC: ChangePasswordUseCase,
+    private readonly createRoleUC: CreateRoleUseCase,
+    private readonly assignRoleUC: AssignRoleUseCase,
+    private readonly removeRoleUC: RemoveRoleUseCase,
+    private readonly listRolesUC: ListRolesUseCase,
+    private readonly getUserRolesUC: GetUserRolesUseCase,
+    private readonly listUsersUC: ListUsersUseCase,
   ) {
     super();
   }
@@ -27,6 +39,8 @@ export class UserController extends BaseController {
     const schema = z.object({
       email: z.string().email(),
       password: z.string().min(6),
+      username: z.string().min(2).optional(),
+      displayName: z.string().min(2).optional(),
     });
 
     const input = schema.parse(req.body);
@@ -86,5 +100,61 @@ export class UserController extends BaseController {
     await this.changePasswordUC.execute(req.user!.sub, input);
 
     res.json(ok({}));
+  };
+
+  createRole = async (req: Request, res: Response) => {
+    const schema = z.object({
+      name: z.string().min(1),
+    });
+
+    const input = schema.parse(req.body);
+    const result = await this.createRoleUC.execute(input);
+
+    res.status(201).json(ok(result));
+  };
+
+  assignRole = async (req: Request, res: Response) => {
+    const schema = z.object({
+      userId: z.string().uuid(),
+      roleName: z.string().min(1),
+    });
+
+    const input = schema.parse(req.body);
+    await this.assignRoleUC.execute(input);
+
+    res.json(ok({}));
+  };
+
+  removeRole = async (req: Request, res: Response) => {
+    const schema = z.object({
+      userId: z.string().uuid(),
+      roleName: z.string().min(1),
+    });
+
+    const input = schema.parse(req.body);
+    await this.removeRoleUC.execute(input);
+
+    res.json(ok({}));
+  };
+
+  listRoles = async (req: Request, res: Response) => {
+    const roles = await this.listRolesUC.execute();
+    res.json(ok(roles));
+  };
+
+  getUserRoles = async (req: Request, res: Response) => {
+    const schema = z.object({
+      userId: z.string().uuid(),
+    });
+
+    const { userId } = schema.parse(req.params);
+    const roles = await this.getUserRolesUC.execute(userId);
+
+    res.json(ok(roles));
+  };
+
+  listUsers = async (req: Request, res: Response) => {
+    const users = await this.listUsersUC.execute();
+    res.json(ok(users));
   };
 }

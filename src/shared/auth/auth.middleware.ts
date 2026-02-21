@@ -20,3 +20,37 @@ export function requireAuth(req: Request & { user?: any }, res: Response, next: 
     return res.status(401).json(fail('UNAUTHORIZED', 'Invalid token'));
   }
 }
+
+/**
+ * Role-based access control middleware
+ * Checks if user has required role(s)
+ */
+export function requireRole(...roles: string[]) {
+  return async (
+    req: Request & { user?: any; userRoles?: string[] },
+    res: Response,
+    next: NextFunction,
+  ) => {
+    if (!req.user) {
+      return res.status(401).json(fail('UNAUTHORIZED', 'Login required'));
+    }
+
+    // Get user roles from request (should be set by enrichUserRoles middleware)
+    const userRoles = req.userRoles || [];
+
+    // Normalize roles to lowercase for case-insensitive comparison
+    const userRolesLower = userRoles.map((r) => r.toLowerCase());
+    const requiredRolesLower = roles.map((r) => r.toLowerCase());
+
+    // Check if user has at least one of the required roles
+    const hasRequiredRole = requiredRolesLower.some((role) => userRolesLower.includes(role));
+
+    if (!hasRequiredRole) {
+      return res
+        .status(403)
+        .json(fail('FORBIDDEN', `Requires one of these roles: ${roles.join(', ')}`));
+    }
+
+    next();
+  };
+}
