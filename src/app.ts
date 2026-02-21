@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './shared/http/swagger.js';
 import { createUserRouter } from './modules/user/interface/user.routes.js';
+import { createCategoryRouter } from './modules/category/interface/category.routes.js';
 import { errorHandler } from './shared/http/error-handler.js';
 
 export function createApp() {
@@ -34,7 +35,10 @@ export function createApp() {
   // ─────────────────────────────────────────────
   // API routes
   // ─────────────────────────────────────────────
-  app.use('/api/v1', createUserRouter());
+  const apiV1 = express.Router();
+  apiV1.use('/users', createUserRouter());
+  apiV1.use('/categories', createCategoryRouter());
+  app.use('/api/v1', apiV1);
 
   // ─────────────────────────────────────────────
   // Global error handler (must be last)
