@@ -114,13 +114,16 @@ export class UserController extends BaseController {
   };
 
   assignRole = async (req: Request, res: Response) => {
-    const schema = z.object({
+    const paramsSchema = z.object({
       userId: z.string().uuid(),
+    });
+    const bodySchema = z.object({
       roleName: z.string().min(1),
     });
 
-    const input = schema.parse(req.body);
-    await this.assignRoleUC.execute(input);
+    const { userId } = paramsSchema.parse(req.params);
+    const { roleName } = bodySchema.parse(req.body);
+    await this.assignRoleUC.execute({ userId, roleName });
 
     res.json(ok({}));
   };
@@ -131,7 +134,7 @@ export class UserController extends BaseController {
       roleName: z.string().min(1),
     });
 
-    const input = schema.parse(req.body);
+    const input = schema.parse(req.params);
     await this.removeRoleUC.execute(input);
 
     res.json(ok({}));

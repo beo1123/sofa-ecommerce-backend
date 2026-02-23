@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './shared/http/swagger.js';
-import { createUserRouter } from './modules/user/interface/user.routes.js';
+import { createUserRouter, createAuthRouter } from './modules/user/interface/user.routes.js';
 import { createCategoryRouter } from './modules/category/interface/category.routes.js';
 import { errorHandler } from './shared/http/error-handler.js';
 
@@ -36,6 +36,8 @@ export function createApp() {
   // API routes
   // ─────────────────────────────────────────────
   const apiV1 = express.Router();
+  apiV1.use('/auth', createAuthRouter());
+  apiV1.use('/me', createUserRouter());
   apiV1.use('/users', createUserRouter());
   apiV1.use('/categories', createCategoryRouter());
   app.use('/api/v1', apiV1);

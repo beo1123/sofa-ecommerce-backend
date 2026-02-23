@@ -379,26 +379,30 @@
 
 /**
  * @openapi
- * /users/roles/assign:
+ * /users/{userId}/roles:
  *   post:
  *     tags: [Admin]
  *     summary: Assign role to user (Admin only)
  *     security:
  *       - bearerAuth: []
  *     description: Requires 'admin' role. Assigns an existing role to a user.
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: "550e8400-e29b-41d4-a716-446655440000"
+ *         description: The target user ID
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [userId, roleName]
+ *             required: [roleName]
  *             properties:
- *               userId:
- *                 type: string
- *                 format: uuid
- *                 example: "550e8400-e29b-41d4-a716-446655440000"
- *                 description: The target user ID
  *               roleName:
  *                 type: string
  *                 example: "admin"
@@ -429,30 +433,29 @@
 
 /**
  * @openapi
- * /users/roles/remove:
- *   post:
+ * /users/{userId}/roles/{roleName}:
+ *   delete:
  *     tags: [Admin]
  *     summary: Remove role from user (Admin only)
  *     security:
  *       - bearerAuth: []
  *     description: Requires 'admin' role. Removes a role from a user.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [userId, roleName]
- *             properties:
- *               userId:
- *                 type: string
- *                 format: uuid
- *                 example: "550e8400-e29b-41d4-a716-446655440000"
- *                 description: The target user ID
- *               roleName:
- *                 type: string
- *                 example: "admin"
- *                 description: The role name to remove
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: "550e8400-e29b-41d4-a716-446655440000"
+ *         description: The target user ID
+ *       - in: path
+ *         name: roleName
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "admin"
+ *         description: The role name to remove
  *     responses:
  *       200:
  *         description: OK - Role removed successfully
@@ -465,8 +468,6 @@
  *                   type: boolean
  *                 message:
  *                   type: string
- *       400:
- *         description: Bad Request - Invalid request data
  *       401:
  *         description: Unauthorized - No valid token provided
  *       403:

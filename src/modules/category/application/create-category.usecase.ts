@@ -9,7 +9,6 @@ import {
 
 export interface CreateCategoryInput {
   name: string;
-  slug: string;
   image?: string;
 }
 
@@ -29,8 +28,9 @@ export class CreateCategoryUseCase {
       throw new CategoryNameTooShortError();
     }
 
-    // Validate slug
-    if (!this.isValidSlug(input.slug)) {
+    // Auto-generate slug from name
+    const slug = this.slugify(input.name);
+    if (!this.isValidSlug(slug)) {
       throw new InvalidCategorySlugError();
     }
 
@@ -41,18 +41,13 @@ export class CreateCategoryUseCase {
     }
 
     // Check if category with same slug already exists
-    const existingBySlug = await this.categoryRepo.findBySlug(input.slug);
+    const existingBySlug = await this.categoryRepo.findBySlug(slug);
     if (existingBySlug) {
-      throw new CategoryAlreadyExistsError('slug', input.slug);
+      throw new CategoryAlreadyExistsError('slug', slug);
     }
 
     const id = randomUUID();
-    const category = new Category(
-      id,
-      input.name.trim(),
-      input.slug.toLowerCase().trim(),
-      input.image || null,
-    );
+    const category = new Category(id, input.name.trim(), slug, input.image || null);
 
     await this.categoryRepo.create(category);
 
@@ -67,5 +62,20 @@ export class CreateCategoryUseCase {
   private isValidSlug(slug: string): boolean {
     // Slug must be lowercase, alphanumeric with hyphens only
     return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug);
+  }
+
+  private normalizeSlug(slug: string): string {
+    return slug
+      .toLowerCase()
+      .trim()
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  private slugify(name: string): string {
+    return this.normalizeSlug(name);
   }
 }

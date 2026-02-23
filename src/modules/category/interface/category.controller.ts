@@ -22,7 +22,6 @@ export class CategoryController extends BaseController {
   create = async (req: Request, res: Response) => {
     const schema = z.object({
       name: z.string().min(2),
-      slug: z.string().min(2),
       image: z.string().optional(),
     });
 
@@ -35,7 +34,6 @@ export class CategoryController extends BaseController {
   update = async (req: Request, res: Response) => {
     const schema = z.object({
       name: z.string().min(2).optional(),
-      slug: z.string().min(2).optional(),
       image: z.string().optional(),
     });
 

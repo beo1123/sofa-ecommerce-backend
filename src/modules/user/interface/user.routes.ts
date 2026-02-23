@@ -18,6 +18,38 @@ import { UserController } from './user.controller.js';
 import { requireAuth, requireRole } from '../../../shared/auth/auth.middleware.js';
 import { enrichUserRoles } from '../../../shared/auth/role.middleware.js';
 
+export function createAuthRouter(): Router {
+  const userRepo = new PgUserRepository();
+  const jwt = new JwtService(process.env.JWT_ACCESS_SECRET!, process.env.JWT_REFRESH_SECRET!);
+
+  const registerUC = new RegisterUserUseCase(userRepo, jwt);
+  const loginUC = new LoginUseCase(userRepo, jwt);
+  const refreshUC = new RefreshTokenUseCase(jwt);
+
+  const controller = new UserController(
+    registerUC,
+    loginUC,
+    refreshUC,
+    new GetMeUseCase(userRepo),
+    new UpdateProfileUseCase(userRepo),
+    new ChangePasswordUseCase(userRepo),
+    new CreateRoleUseCase(new PgRoleRepository()),
+    new AssignRoleUseCase(userRepo, new PgRoleRepository()),
+    new RemoveRoleUseCase(userRepo, new PgRoleRepository()),
+    new ListRolesUseCase(new PgRoleRepository()),
+    new GetUserRolesUseCase(userRepo),
+    new ListUsersUseCase(userRepo),
+  );
+
+  const r = Router();
+
+  r.post('/register', controller.handle(controller.register));
+  r.post('/login', controller.handle(controller.login));
+  r.post('/refresh', controller.handle(controller.refresh));
+
+  return r;
+}
+
 export function createUserRouter(): Router {
   const userRepo = new PgUserRepository();
   const roleRepo = new PgRoleRepository();
@@ -54,13 +86,6 @@ export function createUserRouter(): Router {
   const r = Router();
 
   // =========================================================
-  // PUBLIC: Auth routes
-  // =========================================================
-  r.post('/auth/register', controller.handle(controller.register));
-  r.post('/auth/login', controller.handle(controller.login));
-  r.post('/auth/refresh', controller.handle(controller.refresh));
-
-  // =========================================================
   // PROTECTED: User routes
   // =========================================================
   r.use(requireAuth);
@@ -75,14 +100,14 @@ export function createUserRouter(): Router {
   // =========================================================
   r.use(requireRole('admin'));
 
-  r.get('/users', controller.handle(controller.listUsers));
+  r.get('/', controller.handle(controller.listUsers));
 
   // Roles management
   r.post('/roles', controller.handle(controller.createRole));
   r.get('/roles', controller.handle(controller.listRoles));
-  r.get('/users/:userId/roles', controller.handle(controller.getUserRoles));
-  r.post('/users/roles/assign', controller.handle(controller.assignRole));
-  r.post('/users/roles/remove', controller.handle(controller.removeRole));
+  r.get('/:userId/roles', controller.handle(controller.getUserRoles));
+  r.post('/:userId/roles', controller.handle(controller.assignRole));
+  r.delete('/:userId/roles/:roleName', controller.handle(controller.removeRole));
 
   return r;
 }

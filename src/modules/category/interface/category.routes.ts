@@ -8,6 +8,7 @@ import { ListCategoriesUseCase } from '../application/list-categories.usecase.js
 import { CategoryController } from './category.controller.js';
 import { requireAuth } from '../../../shared/auth/auth.middleware.js';
 import { requireRole } from '../../../shared/auth/auth.middleware.js';
+import { enrichUserRoles } from '../../../shared/auth/role.middleware.js';
 
 export function createCategoryRouter(): Router {
   const categoryRepo = new PgCategoryRepository();
@@ -17,7 +18,6 @@ export function createCategoryRouter(): Router {
   const deleteUC = new DeleteCategoryUseCase(categoryRepo);
   const getUC = new GetCategoryUseCase(categoryRepo);
   const listUC = new ListCategoriesUseCase(categoryRepo);
-
   const controller = new CategoryController(createUC, updateUC, deleteUC, getUC, listUC);
 
   const r = Router();
@@ -33,6 +33,7 @@ export function createCategoryRouter(): Router {
   // PROTECTED: Admin category management
   // =========================================================
   r.use(requireAuth);
+  r.use(enrichUserRoles);
   r.use(requireRole('admin'));
 
   r.post('/', controller.handle(controller.create));

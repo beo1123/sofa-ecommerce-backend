@@ -1,13 +1,15 @@
 /**
- * @swagger
+ * @openapi
  * tags:
  *   - name: Categories
  *     description: Product categories management
- *
+ */
+
+/**
+ * @openapi
  * /categories:
  *   get:
- *     tags:
- *       - Categories
+ *     tags: [Categories]
  *     summary: List all categories
  *     parameters:
  *       - in: query
@@ -45,30 +47,26 @@
  *                       type: integer
  *
  *   post:
- *     tags:
- *       - Categories
+ *     tags: [Categories]
  *     summary: Create a new category
  *     security:
- *       - BearerAuth: []
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - name
- *               - slug
+ *             required: [name]
  *             properties:
  *               name:
  *                 type: string
  *                 minLength: 2
- *               slug:
- *                 type: string
- *                 minLength: 2
- *                 pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+ *                 description: Category name. Slug will be automatically generated from this.
  *               image:
  *                 type: string
+ *                 nullable: true
+ *                 description: Category image URL (optional)
  *     responses:
  *       201:
  *         description: Category created
@@ -87,11 +85,13 @@
  *         description: Forbidden (admin only)
  *       409:
  *         description: Category already exists
- *
+ */
+
+/**
+ * @openapi
  * /categories/{id}:
  *   get:
- *     tags:
- *       - Categories
+ *     tags: [Categories]
  *     summary: Get category by ID
  *     parameters:
  *       - in: path
@@ -114,11 +114,10 @@
  *         description: Category not found
  *
  *   patch:
- *     tags:
- *       - Categories
+ *     tags: [Categories]
  *     summary: Update a category
  *     security:
- *       - BearerAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -136,12 +135,11 @@
  *               name:
  *                 type: string
  *                 minLength: 2
- *               slug:
- *                 type: string
- *                 minLength: 2
- *                 pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+ *                 description: Category name. If provided, slug will be automatically regenerated from the new name.
  *               image:
  *                 type: string
+ *                 nullable: true
+ *                 description: Category image URL (optional)
  *     responses:
  *       200:
  *         description: Category updated
@@ -164,11 +162,10 @@
  *         description: Category with same name/slug exists
  *
  *   delete:
- *     tags:
- *       - Categories
+ *     tags: [Categories]
  *     summary: Delete a category
  *     security:
- *       - BearerAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -185,11 +182,13 @@
  *         description: Forbidden (admin only)
  *       404:
  *         description: Category not found
- *
+ */
+
+/**
+ * @openapi
  * /categories/by-slug/{slug}:
  *   get:
- *     tags:
- *       - Categories
+ *     tags: [Categories]
  *     summary: Get category by slug
  *     parameters:
  *       - in: path
@@ -209,8 +208,18 @@
  *                   $ref: '#/components/schemas/Category'
  *       404:
  *         description: Category not found
- *
+ */
+
+/**
+ * @openapi
  * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ *       description: JWT Bearer token required for authenticated endpoints
+ *
  *   schemas:
  *     Category:
  *       type: object

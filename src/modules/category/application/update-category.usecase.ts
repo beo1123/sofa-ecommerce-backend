@@ -9,7 +9,6 @@ import {
 
 export interface UpdateCategoryInput {
   name?: string;
-  slug?: string;
   image?: string;
 }
 
@@ -46,22 +45,20 @@ export class UpdateCategoryUseCase {
         }
       }
       updateData.name = trimmedName;
-    }
 
-    // Validate and update slug if provided
-    if (input.slug !== undefined) {
-      if (!this.isValidSlug(input.slug)) {
+      // Auto-generate new slug from updated name
+      const newSlug = this.slugify(trimmedName);
+      if (!this.isValidSlug(newSlug)) {
         throw new InvalidCategorySlugError();
       }
-      const normalizedSlug = input.slug.toLowerCase().trim();
       // Check if another category has this slug
-      if (normalizedSlug !== category.slug) {
-        const existing = await this.categoryRepo.findBySlug(normalizedSlug);
+      if (newSlug !== category.slug) {
+        const existing = await this.categoryRepo.findBySlug(newSlug);
         if (existing) {
-          throw new CategoryAlreadyExistsError('slug', normalizedSlug);
+          throw new CategoryAlreadyExistsError('slug', newSlug);
         }
       }
-      updateData.slug = normalizedSlug;
+      updateData.slug = newSlug;
     }
 
     // Update image if provided
@@ -97,5 +94,20 @@ export class UpdateCategoryUseCase {
 
   private isValidSlug(slug: string): boolean {
     return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug);
+  }
+
+  private normalizeSlug(slug: string): string {
+    return slug
+      .toLowerCase()
+      .trim()
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  private slugify(name: string): string {
+    return this.normalizeSlug(name);
   }
 }
