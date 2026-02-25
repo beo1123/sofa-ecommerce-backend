@@ -52,4 +52,12 @@ export class PgRoleRepository implements RoleRepository {
 
     return rows.map((r) => new Role(r.id, r.name));
   }
+
+  async update(role: Role): Promise<void> {
+    await db.update(roles).set({ name: role.name }).where(eq(roles.id, role.id));
+  }
+
+  async delete(id: string): Promise<void> {
+    await db.delete(roles).where(eq(roles.id, id));
+  }
 }

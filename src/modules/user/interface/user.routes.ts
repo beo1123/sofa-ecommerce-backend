@@ -9,6 +9,8 @@ import { GetMeUseCase } from '../application/get-me.usecase.js';
 import { UpdateProfileUseCase } from '../application/update-profile.usecase.js';
 import { ChangePasswordUseCase } from '../application/change-password.usecase.js';
 import { CreateRoleUseCase } from '../application/create-role.usecase.js';
+import { UpdateRoleUseCase } from '../application/update-role.usecase.js';
+import { DeleteRoleUseCase } from '../application/delete-role.usecase.js';
 import { AssignRoleUseCase } from '../application/assign-role.usecase.js';
 import { RemoveRoleUseCase } from '../application/remove-role.usecase.js';
 import { ListRolesUseCase } from '../application/list-roles.usecase.js';
@@ -34,6 +36,8 @@ export function createAuthRouter(): Router {
     new UpdateProfileUseCase(userRepo),
     new ChangePasswordUseCase(userRepo),
     new CreateRoleUseCase(new PgRoleRepository()),
+    new UpdateRoleUseCase(new PgRoleRepository()),
+    new DeleteRoleUseCase(new PgRoleRepository()),
     new AssignRoleUseCase(userRepo, new PgRoleRepository()),
     new RemoveRoleUseCase(userRepo, new PgRoleRepository()),
     new ListRolesUseCase(new PgRoleRepository()),
@@ -62,6 +66,8 @@ export function createUserRouter(): Router {
   const updateProfileUC = new UpdateProfileUseCase(userRepo);
   const changePasswordUC = new ChangePasswordUseCase(userRepo);
   const createRoleUC = new CreateRoleUseCase(roleRepo);
+  const updateRoleUC = new UpdateRoleUseCase(roleRepo);
+  const deleteRoleUC = new DeleteRoleUseCase(roleRepo);
   const assignRoleUC = new AssignRoleUseCase(userRepo, roleRepo);
   const removeRoleUC = new RemoveRoleUseCase(userRepo, roleRepo);
   const listRolesUC = new ListRolesUseCase(roleRepo);
@@ -76,6 +82,8 @@ export function createUserRouter(): Router {
     updateProfileUC,
     changePasswordUC,
     createRoleUC,
+    updateRoleUC,
+    deleteRoleUC,
     assignRoleUC,
     removeRoleUC,
     listRolesUC,
@@ -102,9 +110,13 @@ export function createUserRouter(): Router {
 
   r.get('/', controller.handle(controller.listUsers));
 
-  // Roles management
-  r.post('/roles', controller.handle(controller.createRole));
+  // =========================================================
+  // ADMIN: Roles management
+  // =========================================================
   r.get('/roles', controller.handle(controller.listRoles));
+  r.post('/roles', controller.handle(controller.createRole));
+  r.put('/roles/:roleId', controller.handle(controller.updateRole));
+  r.delete('/roles/:roleId', controller.handle(controller.deleteRole));
   r.get('/:userId/roles', controller.handle(controller.getUserRoles));
   r.post('/:userId/roles', controller.handle(controller.assignRole));
   r.delete('/:userId/roles/:roleName', controller.handle(controller.removeRole));

@@ -8,6 +8,8 @@ import { GetMeUseCase } from '../application/get-me.usecase.js';
 import { UpdateProfileUseCase } from '../application/update-profile.usecase.js';
 import { ChangePasswordUseCase } from '../application/change-password.usecase.js';
 import { CreateRoleUseCase } from '../application/create-role.usecase.js';
+import { UpdateRoleUseCase } from '../application/update-role.usecase.js';
+import { DeleteRoleUseCase } from '../application/delete-role.usecase.js';
 import { AssignRoleUseCase } from '../application/assign-role.usecase.js';
 import { RemoveRoleUseCase } from '../application/remove-role.usecase.js';
 import { ListRolesUseCase } from '../application/list-roles.usecase.js';
@@ -26,6 +28,8 @@ export class UserController extends BaseController {
     private readonly updateProfileUC: UpdateProfileUseCase,
     private readonly changePasswordUC: ChangePasswordUseCase,
     private readonly createRoleUC: CreateRoleUseCase,
+    private readonly updateRoleUC: UpdateRoleUseCase,
+    private readonly deleteRoleUC: DeleteRoleUseCase,
     private readonly assignRoleUC: AssignRoleUseCase,
     private readonly removeRoleUC: RemoveRoleUseCase,
     private readonly listRolesUC: ListRolesUseCase,
@@ -111,6 +115,32 @@ export class UserController extends BaseController {
     const result = await this.createRoleUC.execute(input);
 
     res.status(201).json(ok(result));
+  };
+
+  updateRole = async (req: Request, res: Response) => {
+    const paramsSchema = z.object({
+      roleId: z.string().uuid(),
+    });
+    const bodySchema = z.object({
+      name: z.string().min(1),
+    });
+
+    const { roleId } = paramsSchema.parse(req.params);
+    const { name } = bodySchema.parse(req.body);
+    const result = await this.updateRoleUC.execute({ id: roleId, name });
+
+    res.json(ok(result));
+  };
+
+  deleteRole = async (req: Request, res: Response) => {
+    const schema = z.object({
+      roleId: z.string().uuid(),
+    });
+
+    const { roleId } = schema.parse(req.params);
+    await this.deleteRoleUC.execute(roleId);
+
+    res.json(ok({}));
   };
 
   assignRole = async (req: Request, res: Response) => {

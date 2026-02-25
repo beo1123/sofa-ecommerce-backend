@@ -253,7 +253,42 @@
 
 /**
  * @openapi
- * /roles:
+ * /users/roles:
+ *   get:
+ *     tags: [Admin]
+ *     summary: List all available roles (Admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     description: Requires 'admin' role. Returns all system roles.
+ *     responses:
+ *       200:
+ *         description: OK - List of all roles
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       name:
+ *                         type: string
+ *                   example:
+ *                     - id: "550e8400-e29b-41d4-a716-446655440001"
+ *                       name: "admin"
+ *                     - id: "550e8400-e29b-41d4-a716-446655440002"
+ *                       name: "moderator"
+ *       401:
+ *         description: Unauthorized - No valid token provided
+ *       403:
+ *         description: Forbidden - User does not have 'admin' role
  *   post:
  *     tags: [Admin]
  *     summary: Create new role (Admin only)
@@ -298,41 +333,6 @@
  *         description: Forbidden - User does not have 'admin' role
  *       409:
  *         description: Conflict - Role already exists
- *   get:
- *     tags: [Admin]
- *     summary: List all available roles (Admin only)
- *     security:
- *       - bearerAuth: []
- *     description: Requires 'admin' role. Returns all system roles.
- *     responses:
- *       200:
- *         description: OK - List of all roles
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                         format: uuid
- *                       name:
- *                         type: string
- *                   example:
- *                     - id: "550e8400-e29b-41d4-a716-446655440001"
- *                       name: "admin"
- *                     - id: "550e8400-e29b-41d4-a716-446655440002"
- *                       name: "moderator"
- *       401:
- *         description: Unauthorized - No valid token provided
- *       403:
- *         description: Forbidden - User does not have 'admin' role
  */
 
 /**
@@ -367,14 +367,113 @@
  *                 data:
  *                   type: array
  *                   items:
- *                     type: string
- *                   example: ["ADMIN", "CUSTOMER"]
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       name:
+ *                         type: string
+ *                   example:
+ *                     - id: "550e8400-e29b-41d4-a716-446655440001"
+ *                       name: "admin"
  *       401:
  *         description: Unauthorized - No valid token provided
  *       403:
  *         description: Forbidden - User does not have 'admin' role
  *       404:
  *         description: Not Found - User not found
+ */
+
+/**
+ * @openapi
+ * /users/roles/{roleId}:
+ *   put:
+ *     tags: [Admin]
+ *     summary: Update role (Admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     description: Requires 'admin' role. Updates an existing role's name.
+ *     parameters:
+ *       - in: path
+ *         name: roleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: "550e8400-e29b-41d4-a716-446655440001"
+ *         description: The role ID to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "moderator"
+ *                 description: New role name (must be unique)
+ *     responses:
+ *       200:
+ *         description: OK - Role updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     name:
+ *                       type: string
+ *       400:
+ *         description: Bad Request - Invalid request data
+ *       401:
+ *         description: Unauthorized - No valid token provided
+ *       403:
+ *         description: Forbidden - User does not have 'admin' role
+ *       404:
+ *         description: Not Found - Role not found
+ *       409:
+ *         description: Conflict - Role name already exists
+ *   delete:
+ *     tags: [Admin]
+ *     summary: Delete role (Admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     description: Requires 'admin' role. Deletes a role from the system.
+ *     parameters:
+ *       - in: path
+ *         name: roleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: "550e8400-e29b-41d4-a716-446655440001"
+ *         description: The role ID to delete
+ *     responses:
+ *       200:
+ *         description: OK - Role deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       401:
+ *         description: Unauthorized - No valid token provided
+ *       403:
+ *         description: Forbidden - User does not have 'admin' role
+ *       404:
+ *         description: Not Found - Role not found
  */
 
 /**
