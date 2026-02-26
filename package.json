@@ -12,6 +12,7 @@
     "migrate": "docker exec -i sofa-postgres psql -U sofa_db -d sofa_db < src/db/migrations/001_init.sql",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "seed": "tsx src/shared/db/seed.ts",
     "prepare": "husky"
   },
   "dependencies": {

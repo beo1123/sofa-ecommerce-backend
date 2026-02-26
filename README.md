@@ -199,14 +199,85 @@ PATCH  /api/v1/categories/:id              Update category (admin)
 DELETE /api/v1/categories/:id              Delete category (admin)
 ```
 
+---
+
+## 🔄 Database Seeding & Mock Data
+
+This project includes a handy script to wipe the important tables and insert
+some starter/mock records (roles, an admin user, a couple of categories,
+products, variants, and inventory items).
+
+1. Make sure your PostgreSQL container is running (`docker-compose up -d`).
+2. Run migrations if you haven't already:
+
+   ```bash
+   npm run migrate
+   ```
+
+3. Execute the seed script:
+
+   ```bash
+   npm run seed
+   ```
+
+   The script is located at `src/shared/db/seed.ts` and uses the same Drizzle
+   configuration as the application. It will:
+   - `TRUNCATE` (cascade) all tables related to users, roles, categories,
+     products, variants, images and inventory
+   - insert two roles (`admin` / `user`)
+   - create an admin account (`admin@sofa.com` / password `password`)
+   - add example categories (`Sofas`, `Tables`)
+   - add a sample product with one variant and inventory entry
+
+4. After running the script you can log in with the admin user and start
+   exercising the API right away.
+
+> **Manual SQL alternative**
+>
+> If you prefer raw SQL, the following statements perform the same actions:
+>
+> ```sql
+> TRUNCATE "UserRole", "Role", "User", "Inventory", "ProductVariant",
+>          "ProductImage", "Product", "Category" CASCADE;
+>
+> INSERT INTO "Role" (id, name) VALUES
+>   (gen_random_uuid(), 'admin'),
+>   (gen_random_uuid(), 'user');
+>
+> -- hash a password separately, then insert user & assign role
+> ```
+
+The seeded mock data is lightweight and easily extendable – feel free to
+update the script or add additional `INSERT`/`db.insert` calls when you need
+more realistic samples for development or testing.
+
+---
+
 #### Products
 
 ```
-GET    /api/v1/products                    List products
-GET    /api/v1/products/:id                Get product details
-POST   /api/v1/products                    Create product (admin)
-PATCH  /api/v1/products/:id                Update product (admin)
-DELETE /api/v1/products/:id                Delete product (admin)
+# public store API
+GET    /api/v1/products                    List or search products (supports query params page, perPage, category, q, priceMin, priceMax, color, material, sort)
+GET    /api/v1/products/by-slug/:slug      Get product by slug
+GET    /api/v1/products/related/:slug      Related products (max 4)
+GET    /api/v1/products/search             Alias for list (use q param)
+GET    /api/v1/products/best-selling       Top sellers
+GET    /api/v1/products/featured           Featured items
+GET    /api/v1/products/filters            Available filters (materials/colors/prices)
+
+# admin management (requires JWT + admin role)
+POST   /api/v1/products                    Create product
+GET    /api/v1/products/:id                Get product by id
+PATCH  /api/v1/products/:id                Update product
+DELETE /api/v1/products/:id                Delete product
+# image management
+POST   /api/v1/products/:id/images         Add image to product
+DELETE /api/v1/products/images/:imageId    Remove image
+PATCH  /api/v1/products/:id/images/:imageId/primary   Set primary image
+# variant & inventory
+POST   /api/v1/products/:id/variants       Add variant
+PATCH  /api/v1/products/variants/:variantId    Update variant
+PATCH  /api/v1/products/variants/:variantId/inventory   Update inventory counts
 ```
 
 ## 🔐 Authentication & Authorization

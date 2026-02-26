@@ -5,6 +5,7 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './shared/http/swagger.js';
 import { createUserRouter, createAuthRouter } from './modules/user/interface/user.routes.js';
 import { createCategoryRouter } from './modules/category/interface/category.routes.js';
+import { createProductRouter } from './modules/product/interface/product.routes.js';
 import { errorHandler } from './shared/http/error-handler.js';
 
 export function createApp() {
@@ -40,6 +41,7 @@ export function createApp() {
   apiV1.use('/me', createUserRouter());
   apiV1.use('/users', createUserRouter());
   apiV1.use('/categories', createCategoryRouter());
+  apiV1.use('/products', createProductRouter());
   app.use('/api/v1', apiV1);
 
   // ─────────────────────────────────────────────

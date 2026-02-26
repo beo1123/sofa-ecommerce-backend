@@ -13,12 +13,28 @@ export type ProductSearchQuery = {
   limit: number;
 };
 
+export type VariantInventoryItem = {
+  sku: string;
+  quantity: number;
+  reserved: number;
+};
+
 export type ProductListItem = {
   id: string;
   title: string;
   slug: string;
-  thumbnail: string | null;
-  priceFrom: number;
+  shortDescription?: string | null;
+  priceMin: number | null;
+  priceMax: number | null;
+  primaryImage: { url: string; alt: string | null } | null;
+  variantsCount: number;
+  category: { name: string; slug: string } | null;
+  variants: Array<{
+    id: string;
+    skuPrefix: string | null;
+    inventory?: VariantInventoryItem[];
+    price: number;
+  }>;
 };
 
 export interface ProductRepository {
@@ -36,6 +52,20 @@ export interface ProductRepository {
   searchProducts(query: ProductSearchQuery): Promise<{ items: ProductListItem[]; total: number }>;
 
   getProductBySlug(slug: string): Promise<Product | null>;
+
+  // fetch by primary key id
+  getProductById(id: string): Promise<Product | null>;
+
+  // additional read helpers used by storefront
+  getRelatedProducts(slug: string): Promise<ProductListItem[]>;
+  getBestSellingProducts(limit: number): Promise<ProductListItem[]>;
+  getFeaturedProducts(limit: number): Promise<ProductListItem[]>;
+  getFilters(): Promise<{
+    materials: string[];
+    colors: string[];
+    priceMin: number;
+    priceMax: number;
+  }>;
 
   // ───── Admin Product ─────
   createProduct(input: {
