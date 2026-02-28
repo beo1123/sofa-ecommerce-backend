@@ -1,5 +1,6 @@
 import { Category } from './category.entity.js';
 import { Product } from './product.entity.js';
+import { ProductStatus } from './product-status.entity.js';
 
 export type ProductSearchQuery = {
   q?: string;
@@ -49,6 +50,11 @@ export interface ProductRepository {
   deleteCategory(id: string): Promise<void>;
 
   // ───── Public Product ─────
+  // statuses are stored in a dedicated table so clients can fetch
+  // allowed values or allow admins to create new ones.
+  listStatuses(): Promise<ProductStatus[]>;
+  createStatus(name: string, description?: string): Promise<void>;
+
   searchProducts(query: ProductSearchQuery): Promise<{ items: ProductListItem[]; total: number }>;
 
   getProductBySlug(slug: string): Promise<Product | null>;

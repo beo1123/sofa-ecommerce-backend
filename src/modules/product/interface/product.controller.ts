@@ -11,12 +11,8 @@ import { GetFiltersUseCase } from '../application/get-filters.usecase.js';
 import { CreateProductUseCase } from '../application/create-product.usecase.js';
 import { UpdateProductUseCase } from '../application/update-product.usecase.js';
 import { DeleteProductUseCase } from '../application/delete-product.usecase.js';
-import { AddProductImageUseCase } from '../application/add-product-image.usecase.js';
-import { RemoveProductImageUseCase } from '../application/remove-product-image.usecase.js';
-import { SetPrimaryImageUseCase } from '../application/set-primary-image.usecase.js';
-import { AddVariantUseCase } from '../application/add-variant.usecase.js';
-import { UpdateVariantUseCase } from '../application/update-variant.usecase.js';
-import { UpdateInventoryUseCase } from '../application/update-inventory.usecase.js';
+// status management moved to product-status module
+// image & variant operations have been split into their own modules
 import { GetProductByIdUseCase } from '../application/get-product-by-id.usecase.js';
 import { ok } from '../../../shared/http/api-response.js';
 
@@ -32,12 +28,6 @@ export class ProductController extends BaseController {
     private readonly createUC: CreateProductUseCase,
     private readonly updateUC: UpdateProductUseCase,
     private readonly deleteUC: DeleteProductUseCase,
-    private readonly addImageUC: AddProductImageUseCase,
-    private readonly removeImageUC: RemoveProductImageUseCase,
-    private readonly setPrimaryImageUC: SetPrimaryImageUseCase,
-    private readonly addVariantUC: AddVariantUseCase,
-    private readonly updateVariantUC: UpdateVariantUseCase,
-    private readonly updateInventoryUC: UpdateInventoryUseCase,
   ) {
     super();
   }
@@ -91,6 +81,7 @@ export class ProductController extends BaseController {
   };
 
   // ---------- ADMIN ----------
+  // status, image and variant endpoints have been relocated to their own modules
   create = async (req: Request, res: Response) => {
     const schema = z.object({
       title: z.string().min(2),
@@ -135,77 +126,5 @@ export class ProductController extends BaseController {
     const { id } = schema.parse(req.params);
     const product = await this.getByIdUC.execute(id);
     res.json(ok(product));
-  };
-
-  addImage = async (req: Request, res: Response) => {
-    const params = z.object({ id: z.string().uuid() }).parse(req.params);
-    const body = z
-      .object({
-        url: z.string().url(),
-        alt: z.string().optional(),
-        isPrimary: z.boolean().optional(),
-      })
-      .parse(req.body);
-    const result = await this.addImageUC.execute({ productId: params.id, ...body });
-    res.status(201).json(ok(result));
-  };
-
-  removeImage = async (req: Request, res: Response) => {
-    const schema = z.object({ imageId: z.string().uuid() });
-    const { imageId } = schema.parse(req.params);
-    await this.removeImageUC.execute(imageId);
-    res.json(ok({}));
-  };
-
-  setPrimaryImage = async (req: Request, res: Response) => {
-    const params = z
-      .object({ id: z.string().uuid(), imageId: z.string().uuid() })
-      .parse(req.params);
-    await this.setPrimaryImageUC.execute(params.id, params.imageId);
-    res.json(ok({}));
-  };
-
-  addVariant = async (req: Request, res: Response) => {
-    const params = z.object({ id: z.string().uuid() }).parse(req.params);
-    const body = z
-      .object({
-        name: z.string().min(1),
-        skuPrefix: z.string().optional(),
-        colorCode: z.string().optional(),
-        colorName: z.string().optional(),
-        material: z.string().optional(),
-        price: z.number().nonnegative(),
-        compareAtPrice: z.number().nonnegative().optional(),
-        image: z.string().optional(),
-      })
-      .parse(req.body);
-    const result = await this.addVariantUC.execute({ productId: params.id, ...body });
-    res.status(201).json(ok(result));
-  };
-
-  updateVariant = async (req: Request, res: Response) => {
-    const params = z.object({ variantId: z.string().uuid() }).parse(req.params);
-    const body = z
-      .object({
-        name: z.string().min(1).optional(),
-        price: z.number().nonnegative().optional(),
-        compareAtPrice: z.number().nonnegative().optional(),
-        image: z.string().optional(),
-        colorCode: z.string().optional(),
-        colorName: z.string().optional(),
-        material: z.string().optional(),
-      })
-      .parse(req.body);
-    await this.updateVariantUC.execute(params.variantId, body);
-    res.json(ok({}));
-  };
-
-  updateInventory = async (req: Request, res: Response) => {
-    const params = z.object({ variantId: z.string().uuid() }).parse(req.params);
-    const body = z
-      .object({ quantity: z.number().int(), reserved: z.number().int().optional() })
-      .parse(req.body);
-    await this.updateInventoryUC.execute(params.variantId, body);
-    res.json(ok({}));
   };
 }

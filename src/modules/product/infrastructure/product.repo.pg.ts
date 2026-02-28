@@ -9,6 +9,7 @@ import {
   inventory,
   orderItems,
   reviews,
+  productStatuses,
 } from '../../../shared/db/schema.js';
 import {
   ProductRepository,
@@ -17,9 +18,18 @@ import {
 } from '../domain/product.repository.js';
 import { Category } from '../domain/category.entity.js';
 import { Product } from '../domain/product.entity.js';
+import { ProductStatus } from '../domain/product-status.entity.js';
 import { randomUUID } from 'crypto';
 
 export class PgProductRepository implements ProductRepository {
+  // helper used by several operations to make sure a string status exists in
+  // the lookup table. callers do not need to worry about duplicates – the
+  // insert is done with `ON CONFLICT DO NOTHING`.
+  private async ensureStatus(name: string): Promise<void> {
+    if (!name) return;
+    await db.insert(productStatuses).values({ name }).onConflictDoNothing();
+  }
+
   // ---------- CATEGORY ----------
   async listCategories(): Promise<Category[]> {
     const rows: any[] = await db.select().from(categories);
@@ -610,6 +620,9 @@ export class PgProductRepository implements ProductRepository {
     categoryId?: string;
     status?: string;
   }): Promise<string> {
+    const statusValue = input.status || 'PUBLISHED';
+    await this.ensureStatus(statusValue);
+
     const id = randomUUID();
     await db.insert(products).values({
       id,
@@ -618,7 +631,7 @@ export class PgProductRepository implements ProductRepository {
       shortDescription: input.shortDescription,
       description: input.description,
       categoryId: input.categoryId,
-      status: input.status || 'PUBLISHED',
+      status: statusValue,
     });
     return id;
   }
@@ -640,13 +653,27 @@ export class PgProductRepository implements ProductRepository {
     if (input.shortDescription !== undefined) updateData.shortDescription = input.shortDescription;
     if (input.description !== undefined) updateData.description = input.description;
     if (input.categoryId !== undefined) updateData.categoryId = input.categoryId;
-    if (input.status !== undefined) updateData.status = input.status;
+    if (input.status !== undefined) {
+      updateData.status = input.status;
+      await this.ensureStatus(input.status);
+    }
     if (Object.keys(updateData).length === 0) return;
     await db.update(products).set(updateData).where(eq(products.id, id));
   }
 
   async deleteProduct(id: string): Promise<void> {
     await db.delete(products).where(eq(products.id, id));
+  }
+
+  // ───── Status lookup ─────
+  async listStatuses(): Promise<ProductStatus[]> {
+    const rows: any[] = await db.select().from(productStatuses);
+    return rows.map((r) => new ProductStatus(r.name, r.description));
+  }
+
+  async createStatus(name: string, description?: string): Promise<void> {
+    if (!name) return;
+    await db.insert(productStatuses).values({ name, description }).onConflictDoNothing();
   }
 
   // ---------- IMAGES ----------

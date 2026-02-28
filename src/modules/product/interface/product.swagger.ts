@@ -31,6 +31,14 @@
  *           type: string
  *           format: uuid
  *           nullable: true
+ *     ProductStatus:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *         description:
+ *           type: string
+ *           nullable: true
  *     ProductListItem:
  *       type: object
  *       properties:
@@ -290,6 +298,45 @@
  *     responses:
  *       200:
  *         description: filter data
+ */
+
+/**
+ * @openapi
+ * /products/statuses:
+ *   get:
+ *     tags: [Products]
+ *     summary: List all product statuses (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: array of statuses
+ *   post:
+ *     tags: [Products]
+ *     summary: Create new product status (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: status created
+ *       400:
+ *         description: validation error
+ *       401:
+ *         description: unauthorized
+ *       403:
+ *         description: forbidden
  */
 
 /**

@@ -1,10 +1,10 @@
-import { ProductRepository } from '../domain/product.repository.js';
+import { ProductRepository } from '../../product/domain/product.repository.js';
 
 export class RemoveProductImageUseCase {
   constructor(private readonly productRepo: ProductRepository) {}
 
   async execute(imageId: string): Promise<void> {
-    // we could optionally verify the image exists but repo doesn't expose
+    // no need to look up product by id; repo will just delete
     await this.productRepo.removeProductImage(imageId);
   }
 }

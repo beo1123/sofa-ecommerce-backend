@@ -10,12 +10,7 @@ import { GetFiltersUseCase } from '../application/get-filters.usecase.js';
 import { CreateProductUseCase } from '../application/create-product.usecase.js';
 import { UpdateProductUseCase } from '../application/update-product.usecase.js';
 import { DeleteProductUseCase } from '../application/delete-product.usecase.js';
-import { AddProductImageUseCase } from '../application/add-product-image.usecase.js';
-import { RemoveProductImageUseCase } from '../application/remove-product-image.usecase.js';
-import { SetPrimaryImageUseCase } from '../application/set-primary-image.usecase.js';
-import { AddVariantUseCase } from '../application/add-variant.usecase.js';
-import { UpdateVariantUseCase } from '../application/update-variant.usecase.js';
-import { UpdateInventoryUseCase } from '../application/update-inventory.usecase.js';
+// product status, image and variant operations are handled by separate modules
 import { ProductController } from './product.controller.js';
 import { requireAuth } from '../../../shared/auth/auth.middleware.js';
 import { requireRole } from '../../../shared/auth/auth.middleware.js';
@@ -40,12 +35,6 @@ export function createProductRouter(): Router {
     new CreateProductUseCase(repo),
     new UpdateProductUseCase(repo),
     new DeleteProductUseCase(repo),
-    new AddProductImageUseCase(repo),
-    new RemoveProductImageUseCase(repo),
-    new SetPrimaryImageUseCase(repo),
-    new AddVariantUseCase(repo),
-    new UpdateVariantUseCase(repo),
-    new UpdateInventoryUseCase(repo),
   );
 
   const r = Router();
@@ -68,16 +57,6 @@ export function createProductRouter(): Router {
   r.get('/:id', controller.handle(controller.getById));
   r.patch('/:id', controller.handle(controller.update));
   r.delete('/:id', controller.handle(controller.delete));
-
-  // images
-  r.post('/:id/images', controller.handle(controller.addImage));
-  r.delete('/images/:imageId', controller.handle(controller.removeImage));
-  r.patch('/:id/images/:imageId/primary', controller.handle(controller.setPrimaryImage));
-
-  // variants
-  r.post('/:id/variants', controller.handle(controller.addVariant));
-  r.patch('/variants/:variantId', controller.handle(controller.updateVariant));
-  r.patch('/variants/:variantId/inventory', controller.handle(controller.updateInventory));
 
   return r;
 }

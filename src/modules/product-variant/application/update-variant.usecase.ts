@@ -1,4 +1,4 @@
-import { ProductRepository } from '../domain/product.repository.js';
+import { ProductRepository } from '../../product/domain/product.repository.js';
 
 export interface UpdateVariantInput {
   name?: string;
@@ -14,7 +14,6 @@ export class UpdateVariantUseCase {
   constructor(private readonly productRepo: ProductRepository) {}
 
   async execute(id: string, input: UpdateVariantInput): Promise<void> {
-    // optionally verify variant exist; repository doesn't provide find by id
     await this.productRepo.updateVariant(id, input);
   }
 }

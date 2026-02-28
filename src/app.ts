@@ -6,6 +6,9 @@ import { swaggerSpec } from './shared/http/swagger.js';
 import { createUserRouter, createAuthRouter } from './modules/user/interface/user.routes.js';
 import { createCategoryRouter } from './modules/category/interface/category.routes.js';
 import { createProductRouter } from './modules/product/interface/product.routes.js';
+import { createProductStatusRouter } from './modules/product-status/interface/product-status.routes.js';
+import { createProductImageRouter } from './modules/product-image/interface/product-image.routes.js';
+import { createProductVariantRouter } from './modules/product-variant/interface/product-variant.routes.js';
 import { errorHandler } from './shared/http/error-handler.js';
 
 export function createApp() {
@@ -42,6 +45,10 @@ export function createApp() {
   apiV1.use('/users', createUserRouter());
   apiV1.use('/categories', createCategoryRouter());
   apiV1.use('/products', createProductRouter());
+  // auxiliary product sub-modules
+  apiV1.use('/products/statuses', createProductStatusRouter());
+  apiV1.use('/products/images', createProductImageRouter());
+  apiV1.use('/products/variants', createProductVariantRouter());
   app.use('/api/v1', apiV1);
 
   // ─────────────────────────────────────────────

@@ -203,9 +203,9 @@ DELETE /api/v1/categories/:id              Delete category (admin)
 
 ## 🔄 Database Seeding & Mock Data
 
-This project includes a handy script to wipe the important tables and insert
-some starter/mock records (roles, an admin user, a couple of categories,
-products, variants, and inventory items).
+The optional seed script is still available (`npm run seed`) but it is no longer
+required for normal development. Most developers can skip this step and create
+any test data via the HTTP API or migrations instead.
 
 1. Make sure your PostgreSQL container is running (`docker-compose up -d`).
 2. Run migrations if you haven't already:
@@ -214,23 +214,9 @@ products, variants, and inventory items).
    npm run migrate
    ```
 
-3. Execute the seed script:
-
-   ```bash
-   npm run seed
-   ```
-
-   The script is located at `src/shared/db/seed.ts` and uses the same Drizzle
-   configuration as the application. It will:
-   - `TRUNCATE` (cascade) all tables related to users, roles, categories,
-     products, variants, images and inventory
-   - insert two roles (`admin` / `user`)
-   - create an admin account (`admin@sofa.com` / password `password`)
-   - add example categories (`Sofas`, `Tables`)
-   - add a sample product with one variant and inventory entry
-
-4. After running the script you can log in with the admin user and start
-   exercising the API right away.
+> The seed script lives at `src/shared/db/seed.ts` and will wipe+insert
+> sample categories, a product with a variant, and default roles if you choose
+> to run it.
 
 > **Manual SQL alternative**
 >

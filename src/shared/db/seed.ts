@@ -10,6 +10,7 @@ import {
   userRoles,
   categories,
   products,
+  productStatuses,
   productVariants,
   productImages,
   inventory,
@@ -23,7 +24,7 @@ import bcrypt from 'bcrypt';
 async function main() {
   console.log('clearing existing data...');
   await db.execute(
-    sql`TRUNCATE "UserRole", "Role", "User", "Inventory", "ProductVariant", "ProductImage", "Product", "Category" CASCADE`,
+    sql`TRUNCATE "UserRole", "Role", "User", "Inventory", "ProductVariant", "ProductImage", "Product", "Category", "ProductStatus" CASCADE`,
   );
 
   console.log('inserting roles and admin user...');
@@ -58,6 +59,16 @@ async function main() {
   await db.insert(userRoles).values([{ id: randomUUID(), userId, roleId: userRoleId }]);
 
   console.log('adding sample categories and products...');
+
+  // ensure a few statuses exist so the FK constraint is satisfied
+  await db
+    .insert(productStatuses)
+    .values([
+      { name: 'PUBLISHED', description: 'Visible to customers' },
+      { name: 'DRAFT', description: 'Hidden from storefront' },
+    ])
+    .onConflictDoNothing();
+
   const sofaCat = randomUUID();
   const tableCat = randomUUID();
   await db.insert(categories).values([

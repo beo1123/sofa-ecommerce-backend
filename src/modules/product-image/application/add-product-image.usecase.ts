@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { ProductRepository } from '../domain/product.repository.js';
+import { ProductRepository } from '../../product/domain/product.repository.js';
 import { ProductNotFoundError } from './errors.js';
 
 export interface AddProductImageInput {

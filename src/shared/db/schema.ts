@@ -59,6 +59,16 @@ export const userRoles = pgTable(
 // CATEGORIES & PRODUCTS
 // =========================================================
 
+// small lookup table so we can manage product statuses from the database
+export const productStatuses = pgTable('Product_Status', {
+  // name is used as the natural key so we can continue treating status as a
+  // string in most of the code. this makes it easy to add new statuses later
+  // without touching the application logic; just insert a row in this table.
+  name: text('name').primaryKey(),
+  description: text('description'),
+  createdAt: timestamp('createdAt', { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const categories = pgTable(
   'Category',
   {
@@ -82,7 +92,10 @@ export const products = pgTable(
     slug: text('slug').notNull().unique(),
     shortDescription: text('shortDescription'),
     description: text('description'),
-    status: text('status').notNull().default('PUBLISHED'),
+    status: text('status')
+      .notNull()
+      .default('PUBLISHED')
+      .references(() => productStatuses.name),
     metadata: jsonb('metadata'),
     categoryId: uuid('categoryId').references(() => categories.id),
     createdAt: timestamp('createdAt', { withTimezone: true }).defaultNow().notNull(),
