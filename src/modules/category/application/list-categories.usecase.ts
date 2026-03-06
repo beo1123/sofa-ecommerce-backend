@@ -10,16 +10,17 @@ export interface ListCategoriesOutput {
     updatedAt?: Date;
   }>;
   total: number;
-  limit: number;
-  offset: number;
+  page: number;
+  perPage: number;
 }
 
 export class ListCategoriesUseCase {
   constructor(private readonly categoryRepo: CategoryRepository) {}
 
-  async execute(limit: number = 20, offset: number = 0): Promise<ListCategoriesOutput> {
+  async execute(page: number = 1, perPage: number = 20): Promise<ListCategoriesOutput> {
+    const offset = (page - 1) * perPage;
     const [categories, total] = await Promise.all([
-      this.categoryRepo.findAll(limit, offset),
+      this.categoryRepo.findAll(perPage, offset),
       this.categoryRepo.count(),
     ]);
 
@@ -33,8 +34,8 @@ export class ListCategoriesUseCase {
         updatedAt: c.updatedAt,
       })),
       total,
-      limit,
-      offset,
+      page,
+      perPage,
     };
   }
 }

@@ -2,7 +2,13 @@
  * @openapi
  * tags:
  *   - name: Products
- *     description: Product catalog and administration
+ *     description: Product catalog, management, and operations
+ *   - name: Product Images
+ *     description: Product image management
+ *   - name: Product Variants
+ *     description: Product variant and inventory management
+ *   - name: Product Statuses
+ *     description: Product status management
  */
 
 /**
@@ -31,9 +37,65 @@
  *           type: string
  *           format: uuid
  *           nullable: true
+ *     ProductImage:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         url:
+ *           type: string
+ *         alt:
+ *           type: string
+ *           nullable: true
+ *         isPrimary:
+ *           type: boolean
+ *     ProductVariant:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
+ *         skuPrefix:
+ *           type: string
+ *           nullable: true
+ *         price:
+ *           type: number
+ *         compareAtPrice:
+ *           type: number
+ *           nullable: true
+ *         colorCode:
+ *           type: string
+ *           nullable: true
+ *         colorName:
+ *           type: string
+ *           nullable: true
+ *         material:
+ *           type: string
+ *           nullable: true
+ *         image:
+ *           type: string
+ *           nullable: true
+ *         inventory:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               sku:
+ *                 type: string
+ *               quantity:
+ *                 type: integer
+ *               reserved:
+ *                 type: integer
  *     ProductStatus:
  *       type: object
  *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *           nullable: true
  *         name:
  *           type: string
  *         description:
@@ -174,7 +236,7 @@
  *                       type: integer
  *   post:
  *     tags: [Products]
- *     summary: Create new product (admin)
+ *     summary: Create new product (admin, slug auto-generated from title)
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -187,9 +249,6 @@
  *             properties:
  *               title:
  *                 type: string
- *               slug:
- *                 type: string
- *                 description: optional, auto-generated from title if absent
  *               shortDescription:
  *                 type: string
  *               description:
@@ -304,15 +363,17 @@
  * @openapi
  * /products/statuses:
  *   get:
- *     tags: [Products]
- *     summary: List all product statuses (admin)
+ *     tags: [Product Statuses]
+ *     summary: List all product statuses
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: array of statuses
+ *       401:
+ *         description: unauthorized
  *   post:
- *     tags: [Products]
+ *     tags: [Product Statuses]
  *     summary: Create new product status (admin)
  *     security:
  *       - bearerAuth: []
@@ -341,6 +402,33 @@
 
 /**
  * @openapi
+ * /products/statuses/{name}:
+ *   delete:
+ *     tags: [Product Statuses]
+ *     summary: Delete a product status (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: name
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: status deleted
+ *       401:
+ *         description: unauthorized
+ *       403:
+ *         description: forbidden
+ *       404:
+ *         description: status not found
+ *       409:
+ *         description: status is used by products
+ */
+
+/**
+ * @openapi
  * /products/{id}:
  *   get:
  *     tags: [Products]
@@ -361,7 +449,7 @@
  *         description: not found
  *   patch:
  *     tags: [Products]
- *     summary: Update a product (admin)
+ *     summary: Update a product (admin, slug auto-updates when title changes)
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -379,8 +467,6 @@
  *             type: object
  *             properties:
  *               title:
- *                 type: string
- *               slug:
  *                 type: string
  *               shortDescription:
  *                 type: string
@@ -431,7 +517,7 @@
  * @openapi
  * /products/{id}/images:
  *   post:
- *     tags: [Products]
+ *     tags: [Product Images]
  *     summary: Add image to product (admin)
  *     security:
  *       - bearerAuth: []
@@ -471,7 +557,7 @@
  * @openapi
  * /products/images/{imageId}:
  *   delete:
- *     tags: [Products]
+ *     tags: [Product Images]
  *     summary: Remove product image (admin)
  *     security:
  *       - bearerAuth: []
@@ -495,7 +581,7 @@
  * @openapi
  * /products/{id}/images/{imageId}/primary:
  *   patch:
- *     tags: [Products]
+ *     tags: [Product Images]
  *     summary: Mark an image as primary (admin)
  *     security:
  *       - bearerAuth: []
@@ -525,7 +611,7 @@
  * @openapi
  * /products/{id}/variants:
  *   post:
- *     tags: [Products]
+ *     tags: [Product Variants]
  *     summary: Add variant to product (admin)
  *     security:
  *       - bearerAuth: []
@@ -575,7 +661,7 @@
  * @openapi
  * /products/variants/{variantId}:
  *   patch:
- *     tags: [Products]
+ *     tags: [Product Variants]
  *     summary: Update a variant (admin)
  *     security:
  *       - bearerAuth: []
@@ -620,7 +706,7 @@
  * @openapi
  * /products/variants/{variantId}/inventory:
  *   patch:
- *     tags: [Products]
+ *     tags: [Product Variants]
  *     summary: Update inventory counts for a variant (admin)
  *     security:
  *       - bearerAuth: []

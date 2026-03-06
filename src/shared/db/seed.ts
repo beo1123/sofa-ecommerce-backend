@@ -21,10 +21,48 @@ import bcrypt from 'bcrypt';
 // This script wipes the relevant tables and inserts some starter/mock data.
 // Run it with `npm run seed` after you have a running database.
 
+const SEEDED_ACCOUNTS = {
+  admin: {
+    email: 'admin@admin.com',
+    username: 'admin',
+    displayName: 'Administrator',
+    password: 'Admin@123456',
+  },
+  user: {
+    email: 'user@user.com',
+    username: 'user',
+    displayName: 'Demo User',
+    password: 'User@123456',
+  },
+} as const;
+
 async function main() {
   console.log('clearing existing data...');
   await db.execute(
-    sql`TRUNCATE "UserRole", "Role", "User", "Inventory", "ProductVariant", "ProductImage", "Product", "Category", "ProductStatus" CASCADE`,
+    sql`
+      TRUNCATE TABLE
+        "WishlistItem",
+        "Wishlist",
+        "Review",
+        "ReturnRequest",
+        "OrderItem",
+        "Order",
+        "Address",
+        "Coupon",
+        "AuditLog",
+        "ProductImage",
+        "Inventory",
+        "ProductVariant",
+        "Product",
+        "Category",
+        "Product_Status",
+        "Article",
+        "ArticleCategory",
+        "UserRole",
+        "Role",
+        "User"
+      RESTART IDENTITY CASCADE
+    `,
   );
 
   console.log('inserting roles and admin user...');
@@ -36,25 +74,25 @@ async function main() {
   ]);
 
   const adminId = randomUUID();
-  const passwordHash = await bcrypt.hash('123456', 10);
+  const adminPasswordHash = await bcrypt.hash(SEEDED_ACCOUNTS.admin.password, 10);
   await db.insert(users).values({
     id: adminId,
-    email: 'admin@sofa.com',
-    username: 'admin',
-    password: passwordHash,
-    displayName: 'Administrator',
+    email: SEEDED_ACCOUNTS.admin.email,
+    username: SEEDED_ACCOUNTS.admin.username,
+    password: adminPasswordHash,
+    displayName: SEEDED_ACCOUNTS.admin.displayName,
   });
   await db.insert(userRoles).values([{ id: randomUUID(), userId: adminId, roleId: adminRoleId }]);
 
   // create a regular user
   const userId = randomUUID();
-  const userPasswordHash = await bcrypt.hash('123456', 10);
+  const userPasswordHash = await bcrypt.hash(SEEDED_ACCOUNTS.user.password, 10);
   await db.insert(users).values({
     id: userId,
-    email: 'user@sofa.com',
-    username: 'user',
+    email: SEEDED_ACCOUNTS.user.email,
+    username: SEEDED_ACCOUNTS.user.username,
     password: userPasswordHash,
-    displayName: 'Demo User',
+    displayName: SEEDED_ACCOUNTS.user.displayName,
   });
   await db.insert(userRoles).values([{ id: randomUUID(), userId, roleId: userRoleId }]);
 
@@ -66,18 +104,36 @@ async function main() {
     .values([
       { name: 'PUBLISHED', description: 'Visible to customers' },
       { name: 'DRAFT', description: 'Hidden from storefront' },
+      { name: 'ARCHIVED', description: 'Archived product, not for sale' },
     ])
     .onConflictDoNothing();
 
   const sofaCat = randomUUID();
   const tableCat = randomUUID();
+  const chairCat = randomUUID();
   await db.insert(categories).values([
-    { id: sofaCat, name: 'Sofas', slug: 'sofas', image: null },
-    { id: tableCat, name: 'Tables', slug: 'tables', image: null },
+    {
+      id: sofaCat,
+      name: 'Sofas',
+      slug: 'sofas',
+      image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc',
+    },
+    {
+      id: tableCat,
+      name: 'Tables',
+      slug: 'tables',
+      image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85',
+    },
+    {
+      id: chairCat,
+      name: 'Chairs',
+      slug: 'chairs',
+      image: 'https://images.unsplash.com/photo-1519710164239-da123dc03ef4',
+    },
   ]);
 
   const prod1 = randomUUID();
-  // add couple more sample products with variants and inventory
+  // add sample products with variants and inventory
   const sampleProducts = [
     {
       id: prod1,
@@ -85,7 +141,15 @@ async function main() {
       slug: 'modern-sofa',
       shortDescription: 'Comfortable modern sofa',
       categoryId: sofaCat,
-      metadata: JSON.stringify({ category: 'sofas' }),
+      status: 'PUBLISHED' as const,
+      metadata: { category: 'sofas', featured: true },
+      images: [
+        {
+          url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc',
+          alt: 'Modern sofa in living room',
+          isPrimary: true,
+        },
+      ],
       variants: [
         {
           name: 'Gray',
@@ -93,8 +157,20 @@ async function main() {
           price: '499.99',
           compareAtPrice: '599.99',
           colorName: 'Gray',
+          colorCode: '#808080',
+          material: 'Fabric',
+          image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc',
         },
-        { name: 'Blue', skuPrefix: 'BF', price: '529.99', compareAtPrice: null, colorName: 'Blue' },
+        {
+          name: 'Blue',
+          skuPrefix: 'BF',
+          price: '529.99',
+          compareAtPrice: null,
+          colorName: 'Blue',
+          colorCode: '#0000FF',
+          material: 'Fabric',
+          image: 'https://images.unsplash.com/photo-1493666438817-866a91353ca9',
+        },
       ],
     },
     {
@@ -103,7 +179,15 @@ async function main() {
       slug: 'wooden-coffee-table',
       shortDescription: 'Solid wood coffee table',
       categoryId: tableCat,
-      metadata: JSON.stringify({ category: 'tables' }),
+      status: 'PUBLISHED' as const,
+      metadata: { category: 'tables', featured: false },
+      images: [
+        {
+          url: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85',
+          alt: 'Wooden coffee table',
+          isPrimary: true,
+        },
+      ],
       variants: [
         {
           name: 'Natural',
@@ -111,6 +195,9 @@ async function main() {
           price: '199.99',
           compareAtPrice: null,
           colorName: 'Natural',
+          colorCode: '#C68642',
+          material: 'Wood',
+          image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85',
         },
       ],
     },
@@ -120,7 +207,15 @@ async function main() {
       slug: 'corner-sofa',
       shortDescription: 'Large corner sofa',
       categoryId: sofaCat,
-      metadata: JSON.stringify({ category: 'sofas' }),
+      status: 'DRAFT' as const,
+      metadata: { category: 'sofas', featured: false },
+      images: [
+        {
+          url: 'https://images.unsplash.com/photo-1493666438817-866a91353ca9',
+          alt: 'Corner sofa',
+          isPrimary: true,
+        },
+      ],
       variants: [
         {
           name: 'Beige',
@@ -128,6 +223,37 @@ async function main() {
           price: '899.99',
           compareAtPrice: '999.99',
           colorName: 'Beige',
+          colorCode: '#F5F5DC',
+          material: 'Linen',
+          image: 'https://images.unsplash.com/photo-1493666438817-866a91353ca9',
+        },
+      ],
+    },
+    {
+      id: randomUUID(),
+      title: 'Dining Chair Premium',
+      slug: 'dining-chair-premium',
+      shortDescription: 'Ergonomic dining chair',
+      categoryId: chairCat,
+      status: 'PUBLISHED' as const,
+      metadata: { category: 'chairs', featured: true },
+      images: [
+        {
+          url: 'https://images.unsplash.com/photo-1519710164239-da123dc03ef4',
+          alt: 'Dining chair premium',
+          isPrimary: true,
+        },
+      ],
+      variants: [
+        {
+          name: 'Black',
+          skuPrefix: 'DC',
+          price: '149.99',
+          compareAtPrice: null,
+          colorName: 'Black',
+          colorCode: '#000000',
+          material: 'Leather',
+          image: 'https://images.unsplash.com/photo-1519710164239-da123dc03ef4',
         },
       ],
     },
@@ -139,10 +265,20 @@ async function main() {
       title: sp.title,
       slug: sp.slug,
       shortDescription: sp.shortDescription,
-      status: 'PUBLISHED',
+      status: sp.status,
       metadata: sp.metadata,
       categoryId: sp.categoryId,
     });
+
+    for (const img of sp.images) {
+      await db.insert(productImages).values({
+        id: randomUUID(),
+        productId: sp.id,
+        url: img.url,
+        alt: img.alt,
+        isPrimary: img.isPrimary,
+      });
+    }
 
     for (let i = 0; i < sp.variants.length; i++) {
       const v = sp.variants[i];
@@ -155,6 +291,9 @@ async function main() {
         price: v.price,
         compareAtPrice: v.compareAtPrice,
         colorName: v.colorName,
+        colorCode: v.colorCode,
+        material: v.material,
+        image: v.image,
       } as never);
 
       const invId = randomUUID();
@@ -170,6 +309,9 @@ async function main() {
   }
 
   console.log('seed data inserted.');
+  console.log('seeded login accounts:');
+  console.log(`- admin: ${SEEDED_ACCOUNTS.admin.email} / ${SEEDED_ACCOUNTS.admin.password}`);
+  console.log(`- user : ${SEEDED_ACCOUNTS.user.email} / ${SEEDED_ACCOUNTS.user.password}`);
 }
 
 main()

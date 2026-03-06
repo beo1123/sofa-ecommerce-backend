@@ -69,6 +69,10 @@
  *   post:
  *     tags: [Auth]
  *     summary: Login user and get JWT tokens
+ *     description: |
+ *       Seed accounts available after running `npm run seed`:
+ *       - Admin: `admin@admin.com` / `Admin@123456`
+ *       - User: `user@user.com` / `User@123456`
  *     requestBody:
  *       required: true
  *       content:
@@ -82,7 +86,7 @@
  *                 example: admin@admin.com
  *               password:
  *                 type: string
- *                 example: SecurePassword123
+ *                 example: Admin@123456
  *     responses:
  *       200:
  *         description: OK - Login successful

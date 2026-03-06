@@ -85,7 +85,6 @@ export class ProductController extends BaseController {
   create = async (req: Request, res: Response) => {
     const schema = z.object({
       title: z.string().min(2),
-      slug: z.string().optional(),
       shortDescription: z.string().optional(),
       description: z.string().optional(),
       categoryId: z.string().uuid().optional(),
@@ -101,7 +100,6 @@ export class ProductController extends BaseController {
     const paramsSchema = z.object({ id: z.string().uuid() });
     const bodySchema = z.object({
       title: z.string().min(2).optional(),
-      slug: z.string().optional(),
       shortDescription: z.string().optional(),
       description: z.string().optional(),
       categoryId: z.string().uuid().optional(),

@@ -13,17 +13,17 @@
  *     summary: List all categories
  *     parameters:
  *       - in: query
- *         name: limit
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: perPage
  *         schema:
  *           type: integer
  *           default: 20
- *         description: Number of items to return
- *       - in: query
- *         name: offset
- *         schema:
- *           type: integer
- *           default: 0
- *         description: Number of items to skip
+ *         description: Number of items per page
  *     responses:
  *       200:
  *         description: List of categories
@@ -41,9 +41,9 @@
  *                         $ref: '#/components/schemas/Category'
  *                     total:
  *                       type: integer
- *                     limit:
+ *                     page:
  *                       type: integer
- *                     offset:
+ *                     perPage:
  *                       type: integer
  *
  *   post:

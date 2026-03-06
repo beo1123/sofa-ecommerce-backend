@@ -5,10 +5,10 @@ import {
   ProductNotFoundError,
   ProductTitleTooShortError,
 } from './errors.js';
+import { generateSlug, isValidSlug } from './slug.util.js';
 
 export interface UpdateProductInput {
   title?: string;
-  slug?: string;
   shortDescription?: string;
   description?: string;
   categoryId?: string;
@@ -30,30 +30,28 @@ export class UpdateProductUseCase {
       throw new ProductNotFoundError();
     }
 
+    let normalizedTitle: string | undefined;
     let slug: string | undefined;
-    if (input.slug !== undefined || input.title !== undefined) {
-      if (input.slug) {
-        slug = this.normalizeSlug(input.slug);
-      } else if (input.title) {
-        slug = this.slugify(input.title);
+
+    if (input.title !== undefined) {
+      normalizedTitle = input.title.trim();
+      if (normalizedTitle.length < 2) {
+        throw new ProductTitleTooShortError();
       }
-      if (slug && !this.isValidSlug(slug)) {
+
+      slug = generateSlug(normalizedTitle);
+      if (!isValidSlug(slug)) {
         throw new InvalidProductSlugError();
       }
-      if (slug) {
-        const bySlug = await this.productRepo.getProductBySlug(slug);
-        if (bySlug && bySlug.id !== id) {
-          throw new ProductAlreadyExistsError('slug', slug);
-        }
-      }
-    }
 
-    if (input.title && input.title.trim().length < 2) {
-      throw new ProductTitleTooShortError();
+      const bySlug = await this.productRepo.getProductBySlug(slug);
+      if (bySlug && bySlug.id !== id) {
+        throw new ProductAlreadyExistsError('slug', slug);
+      }
     }
 
     await this.productRepo.updateProduct(id, {
-      title: input.title,
+      title: normalizedTitle,
       slug,
       shortDescription: input.shortDescription,
       description: input.description,
@@ -63,27 +61,8 @@ export class UpdateProductUseCase {
 
     return {
       id,
-      title: input.title ?? existing.title,
+      title: normalizedTitle ?? existing.title,
       slug: slug ?? existing.slug,
     };
-  }
-
-  private isValidSlug(slug: string): boolean {
-    return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug);
-  }
-
-  private normalizeSlug(slug: string): string {
-    return slug
-      .toLowerCase()
-      .trim()
-      .normalize('NFD')
-      .replace(/\p{Diacritic}/gu, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  }
-
-  private slugify(name: string): string {
-    return this.normalizeSlug(name);
   }
 }

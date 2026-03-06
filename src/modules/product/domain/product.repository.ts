@@ -54,6 +54,7 @@ export interface ProductRepository {
   // allowed values or allow admins to create new ones.
   listStatuses(): Promise<ProductStatus[]>;
   createStatus(name: string, description?: string): Promise<void>;
+  deleteStatus(name: string): Promise<void>;
 
   searchProducts(query: ProductSearchQuery): Promise<{ items: ProductListItem[]; total: number }>;
 

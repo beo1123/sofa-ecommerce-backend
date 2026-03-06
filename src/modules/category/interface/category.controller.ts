@@ -59,10 +59,10 @@ export class CategoryController extends BaseController {
   };
 
   list = async (req: Request, res: Response) => {
-    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
-    const offset = parseInt(req.query.offset as string) || 0;
+    const page = Math.max(parseInt(req.query.page as string) || 1, 1);
+    const perPage = Math.min(parseInt(req.query.perPage as string) || 20, 100);
 
-    const result = await this.listUC.execute(limit, offset);
+    const result = await this.listUC.execute(page, perPage);
     res.json(ok(result));
   };
 }

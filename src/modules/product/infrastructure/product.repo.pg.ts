@@ -653,6 +653,7 @@ export class PgProductRepository implements ProductRepository {
     if (input.shortDescription !== undefined) updateData.shortDescription = input.shortDescription;
     if (input.description !== undefined) updateData.description = input.description;
     if (input.categoryId !== undefined) updateData.categoryId = input.categoryId;
+    if (input.slug !== undefined) updateData.slug = input.slug;
     if (input.status !== undefined) {
       updateData.status = input.status;
       await this.ensureStatus(input.status);
@@ -674,6 +675,10 @@ export class PgProductRepository implements ProductRepository {
   async createStatus(name: string, description?: string): Promise<void> {
     if (!name) return;
     await db.insert(productStatuses).values({ name, description }).onConflictDoNothing();
+  }
+
+  async deleteStatus(name: string): Promise<void> {
+    await db.delete(productStatuses).where(eq(productStatuses.name, name));
   }
 
   // ---------- IMAGES ----------

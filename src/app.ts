@@ -44,11 +44,11 @@ export function createApp() {
   apiV1.use('/me', createUserRouter());
   apiV1.use('/users', createUserRouter());
   apiV1.use('/categories', createCategoryRouter());
-  apiV1.use('/products', createProductRouter());
   // auxiliary product sub-modules
   apiV1.use('/products/statuses', createProductStatusRouter());
   apiV1.use('/products/images', createProductImageRouter());
   apiV1.use('/products/variants', createProductVariantRouter());
+  apiV1.use('/products', createProductRouter());
   app.use('/api/v1', apiV1);
 
   // ─────────────────────────────────────────────

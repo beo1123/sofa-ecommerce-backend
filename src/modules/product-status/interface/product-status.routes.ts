@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { PgProductRepository } from '../../product/infrastructure/product.repo.pg.js';
 import { ListProductStatusesUseCase } from '../application/list-product-statuses.usecase.js';
 import { CreateProductStatusUseCase } from '../application/create-product-status.usecase.js';
+import { DeleteProductStatusUseCase } from '../application/delete-product-status.usecase.js';
 import { requireAuth } from '../../../shared/auth/auth.middleware.js';
 import { enrichUserRoles } from '../../../shared/auth/role.middleware.js';
 import { requireRole } from '../../../shared/auth/auth.middleware.js';
@@ -14,6 +15,7 @@ class ProductStatusController extends BaseController {
   constructor(
     private readonly listUC: ListProductStatusesUseCase,
     private readonly createUC: CreateProductStatusUseCase,
+    private readonly deleteUC: DeleteProductStatusUseCase,
   ) {
     super();
   }
@@ -29,6 +31,13 @@ class ProductStatusController extends BaseController {
     await this.createUC.execute(name, description);
     res.status(201).json(ok({ name }));
   };
+
+  delete = async (req: any, res: any) => {
+    const schema = z.object({ name: z.string().min(1) });
+    const { name } = schema.parse(req.params);
+    await this.deleteUC.execute(name);
+    res.json(ok({}));
+  };
 }
 
 export function createProductStatusRouter(): Router {
@@ -36,15 +45,17 @@ export function createProductStatusRouter(): Router {
   const controller = new ProductStatusController(
     new ListProductStatusesUseCase(repo),
     new CreateProductStatusUseCase(repo),
+    new DeleteProductStatusUseCase(repo),
   );
 
   const r = Router();
-  r.get('/', controller.handle(controller.list));
 
   r.use(requireAuth);
   r.use(enrichUserRoles);
   r.use(requireRole('admin'));
+  r.get('/', controller.handle(controller.list));
   r.post('/', controller.handle(controller.create));
+  r.delete('/:name', controller.handle(controller.delete));
 
   return r;
 }

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { db } from '../../../shared/db/pg.js';
 import { categories } from '../../../shared/db/schema.js';
 import { CategoryRepository } from '../domain/category.repository.js';
@@ -76,7 +76,7 @@ export class PgCategoryRepository implements CategoryRepository {
   }
 
   async findAll(limit?: number, offset?: number): Promise<Category[]> {
-    let query: any = db.select().from(categories);
+    let query: any = db.select().from(categories).orderBy(desc(categories.createdAt));
 
     if (limit !== undefined) {
       query = query.limit(limit);
