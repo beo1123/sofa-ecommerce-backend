@@ -1,12 +1,5 @@
 /**
  * @openapi
- * tags:
- *   - name: Products
- *     description: Product catalog and administration
- */
-
-/**
- * @openapi
  * components:
  *   schemas:
  *     Product:
@@ -15,68 +8,77 @@
  *         id:
  *           type: string
  *           format: uuid
+ *           example: 550e8400-e29b-41d4-a716-446655440020
  *         title:
  *           type: string
+ *           example: Comfort Cloud Sofa
  *         slug:
  *           type: string
+ *           example: comfort-cloud-sofa
  *         shortDescription:
  *           type: string
  *           nullable: true
+ *           example: A plush three-seat sofa with cloud-like cushions.
  *         description:
  *           type: string
  *           nullable: true
+ *           example: Full description of the product.
  *         status:
  *           type: string
+ *           example: active
  *         categoryId:
  *           type: string
  *           format: uuid
  *           nullable: true
- *     ProductStatus:
- *       type: object
- *       properties:
- *         name:
- *           type: string
- *         description:
- *           type: string
- *           nullable: true
+ *           example: 550e8400-e29b-41d4-a716-446655440010
  *     ProductListItem:
  *       type: object
  *       properties:
  *         id:
  *           type: string
  *           format: uuid
+ *           example: 550e8400-e29b-41d4-a716-446655440020
  *         title:
  *           type: string
+ *           example: Comfort Cloud Sofa
  *         slug:
  *           type: string
+ *           example: comfort-cloud-sofa
  *         shortDescription:
  *           type: string
  *           nullable: true
  *         priceMin:
  *           type: number
  *           nullable: true
+ *           example: 499.99
  *         priceMax:
  *           type: number
  *           nullable: true
+ *           example: 799.99
  *         primaryImage:
  *           type: object
  *           nullable: true
  *           properties:
  *             url:
  *               type: string
+ *               example: https://example.com/images/sofa.jpg
  *             alt:
  *               type: string
  *               nullable: true
+ *               example: Comfort Cloud Sofa in grey
  *         variantsCount:
  *           type: integer
+ *           example: 3
  *         category:
  *           type: object
  *           nullable: true
  *           properties:
  *             name:
  *               type: string
+ *               example: Sofas
  *             slug:
  *               type: string
+ *               example: sofas
  *         variants:
  *           type: array
  *           items:
@@ -109,56 +111,70 @@
  *   get:
  *     tags: [Products]
  *     summary: List / search products
+ *     description: Returns a paginated, filterable list of products. Public endpoint.
  *     parameters:
  *       - in: query
  *         name: page
  *         schema:
  *           type: integer
  *           default: 1
+ *           minimum: 1
+ *         description: Page number (1-based)
  *       - in: query
  *         name: perPage
  *         schema:
  *           type: integer
  *           default: 20
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Results per page
  *       - in: query
  *         name: category
  *         schema:
  *           type: string
- *         description: category slug to filter
+ *         description: Filter by category slug
  *       - in: query
  *         name: q
  *         schema:
  *           type: string
- *         description: full text query
+ *         description: Full-text search query (matches title and description)
  *       - in: query
  *         name: priceMin
  *         schema:
  *           type: number
+ *         description: Minimum price filter
  *       - in: query
  *         name: priceMax
  *         schema:
  *           type: number
+ *         description: Maximum price filter
  *       - in: query
  *         name: color
  *         schema:
  *           type: string
+ *         description: Filter by color name
  *       - in: query
  *         name: material
  *         schema:
  *           type: string
+ *         description: Filter by material
  *       - in: query
  *         name: sort
  *         schema:
  *           type: string
- *           enum: [price_asc,price_desc,newest]
+ *           enum: [price_asc, price_desc, newest]
+ *         description: Sort order
  *     responses:
  *       200:
- *         description: paginated list
+ *         description: Paginated product list
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *                 data:
  *                   type: object
  *                   properties:
@@ -168,13 +184,17 @@
  *                         $ref: '#/components/schemas/ProductListItem'
  *                     total:
  *                       type: integer
+ *                       example: 42
  *                     page:
  *                       type: integer
+ *                       example: 1
  *                     perPage:
  *                       type: integer
+ *                       example: 20
  *   post:
  *     tags: [Products]
- *     summary: Create new product (admin)
+ *     summary: Create a new product (admin only)
+ *     description: Creates a product record. The slug is auto-generated from the title if not provided. Requires the **admin** role.
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -187,55 +207,76 @@
  *             properties:
  *               title:
  *                 type: string
+ *                 example: Comfort Cloud Sofa
  *               slug:
  *                 type: string
- *                 description: optional, auto-generated from title if absent
+ *                 description: Optional – auto-generated from title if omitted
+ *                 example: comfort-cloud-sofa
  *               shortDescription:
  *                 type: string
+ *                 example: A plush three-seat sofa.
  *               description:
  *                 type: string
+ *                 example: Full product description.
  *               categoryId:
  *                 type: string
  *                 format: uuid
+ *                 example: 550e8400-e29b-41d4-a716-446655440010
  *               status:
  *                 type: string
+ *                 example: active
  *     responses:
  *       201:
- *         description: product created
+ *         description: Product created
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *                 data:
  *                   $ref: '#/components/schemas/Product'
  *       400:
- *         description: validation error
+ *         description: Validation error
  *       401:
- *         description: unauthorized
+ *         description: Unauthorized – no valid token
  *       403:
- *         description: forbidden (admin only)
+ *         description: Forbidden – requires admin role
  *       409:
- *         description: conflict (slug exists)
+ *         description: Conflict – slug already in use
  */
 
 /**
  * @openapi
- * /products/{slug}:
+ * /products/by-slug/{slug}:
  *   get:
  *     tags: [Products]
- *     summary: Get product by slug
+ *     summary: Get a product by slug
+ *     description: Returns full product details including variants and images. Public endpoint.
  *     parameters:
  *       - in: path
  *         name: slug
  *         required: true
  *         schema:
  *           type: string
+ *           example: comfort-cloud-sofa
  *     responses:
  *       200:
- *         description: product details
+ *         description: Product details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Product'
  *       404:
- *         description: not found
+ *         description: Not Found – no product with this slug
  */
 
 /**
@@ -243,16 +284,30 @@
  * /products/related/{slug}:
  *   get:
  *     tags: [Products]
- *     summary: Get related products by slug
+ *     summary: Get products related to a given product
+ *     description: Returns products in the same category as the given product. Public endpoint.
  *     parameters:
  *       - in: path
  *         name: slug
  *         required: true
  *         schema:
  *           type: string
+ *           example: comfort-cloud-sofa
  *     responses:
  *       200:
- *         description: list of related items
+ *         description: List of related products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/ProductListItem'
  */
 
 /**
@@ -260,16 +315,32 @@
  * /products/best-selling:
  *   get:
  *     tags: [Products]
- *     summary: Top selling products
+ *     summary: Get top-selling products
+ *     description: Returns the best-selling products ordered by sales volume. Public endpoint.
  *     parameters:
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
  *           default: 8
+ *           minimum: 1
+ *           maximum: 50
+ *         description: Number of products to return
  *     responses:
  *       200:
- *         description: array of ProductListItem
+ *         description: Best-selling products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/ProductListItem'
  */
 
 /**
@@ -277,16 +348,32 @@
  * /products/featured:
  *   get:
  *     tags: [Products]
- *     summary: Featured products (score based)
+ *     summary: Get featured products
+ *     description: Returns editorially featured products ordered by feature score. Public endpoint.
  *     parameters:
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
  *           default: 8
+ *           minimum: 1
+ *           maximum: 50
+ *         description: Number of products to return
  *     responses:
  *       200:
- *         description: array of ProductListItem
+ *         description: Featured products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/ProductListItem'
  */
 
 /**
@@ -294,49 +381,38 @@
  * /products/filters:
  *   get:
  *     tags: [Products]
- *     summary: Retrieve available filter options (materials/colors/prices)
+ *     summary: Get available filter options
+ *     description: Returns distinct colors, materials and price bounds that can be used to filter the catalog. Public endpoint.
  *     responses:
  *       200:
- *         description: filter data
- */
-
-/**
- * @openapi
- * /products/statuses:
- *   get:
- *     tags: [Products]
- *     summary: List all product statuses (admin)
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: array of statuses
- *   post:
- *     tags: [Products]
- *     summary: Create new product status (admin)
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [name]
- *             properties:
- *               name:
- *                 type: string
- *               description:
- *                 type: string
- *     responses:
- *       201:
- *         description: status created
- *       400:
- *         description: validation error
- *       401:
- *         description: unauthorized
- *       403:
- *         description: forbidden
+ *         description: Filter options
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     colors:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example: [grey, beige, navy]
+ *                     materials:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example: [fabric, leather, velvet]
+ *                     priceMin:
+ *                       type: number
+ *                       example: 199.99
+ *                     priceMax:
+ *                       type: number
+ *                       example: 2499.99
  */
 
 /**
@@ -344,7 +420,10 @@
  * /products/{id}:
  *   get:
  *     tags: [Products]
- *     summary: Get product by id (admin)
+ *     summary: Get a product by ID (admin only)
+ *     description: Returns full product details by UUID. Requires the **admin** role.
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -352,16 +431,30 @@
  *         schema:
  *           type: string
  *           format: uuid
- *     security:
- *       - bearerAuth: []
+ *           example: 550e8400-e29b-41d4-a716-446655440020
  *     responses:
  *       200:
- *         description: product details
+ *         description: Product details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Product'
+ *       401:
+ *         description: Unauthorized – no valid token
+ *       403:
+ *         description: Forbidden – requires admin role
  *       404:
- *         description: not found
+ *         description: Not Found – product not found
  *   patch:
  *     tags: [Products]
- *     summary: Update a product (admin)
+ *     summary: Update a product (admin only)
+ *     description: Partially updates a product. Providing a new title regenerates the slug unless a custom slug is also supplied. Requires the **admin** role.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -371,6 +464,7 @@
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: 550e8400-e29b-41d4-a716-446655440020
  *     requestBody:
  *       required: true
  *       content:
@@ -393,20 +487,31 @@
  *                 type: string
  *     responses:
  *       200:
- *         description: updated product
+ *         description: Updated product
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Product'
  *       400:
- *         description: validation error
+ *         description: Validation error
  *       401:
- *         description: unauthorized
+ *         description: Unauthorized – no valid token
  *       403:
- *         description: forbidden
+ *         description: Forbidden – requires admin role
  *       404:
- *         description: not found
+ *         description: Not Found – product not found
  *       409:
- *         description: slug conflict
+ *         description: Conflict – slug already in use by another product
  *   delete:
  *     tags: [Products]
- *     summary: Delete a product (admin)
+ *     summary: Delete a product (admin only)
+ *     description: Permanently removes a product and all its associated images and variants. Requires the **admin** role.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -416,238 +521,22 @@
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: 550e8400-e29b-41d4-a716-446655440020
  *     responses:
  *       200:
- *         description: deleted
+ *         description: Product deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *       401:
- *         description: unauthorized
+ *         description: Unauthorized – no valid token
  *       403:
- *         description: forbidden
+ *         description: Forbidden – requires admin role
  *       404:
- *         description: not found
- */
-
-/**
- * @openapi
- * /products/{id}/images:
- *   post:
- *     tags: [Products]
- *     summary: Add image to product (admin)
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [url]
- *             properties:
- *               url:
- *                 type: string
- *               alt:
- *                 type: string
- *               isPrimary:
- *                 type: boolean
- *     responses:
- *       201:
- *         description: image added
- *       400:
- *         description: validation error
- *       401:
- *         description: unauthorized
- *       403:
- *         description: forbidden
- */
-
-/**
- * @openapi
- * /products/images/{imageId}:
- *   delete:
- *     tags: [Products]
- *     summary: Remove product image (admin)
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: imageId
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     responses:
- *       200:
- *         description: removed
- *       401:
- *         description: unauthorized
- *       403:
- *         description: forbidden
- */
-
-/**
- * @openapi
- * /products/{id}/images/{imageId}/primary:
- *   patch:
- *     tags: [Products]
- *     summary: Mark an image as primary (admin)
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *       - in: path
- *         name: imageId
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     responses:
- *       200:
- *         description: updated
- *       401:
- *         description: unauthorized
- *       403:
- *         description: forbidden
- */
-
-/**
- * @openapi
- * /products/{id}/variants:
- *   post:
- *     tags: [Products]
- *     summary: Add variant to product (admin)
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [name,price]
- *             properties:
- *               name:
- *                 type: string
- *               skuPrefix:
- *                 type: string
- *               colorCode:
- *                 type: string
- *               colorName:
- *                 type: string
- *               material:
- *                 type: string
- *               price:
- *                 type: number
- *               compareAtPrice:
- *                 type: number
- *               image:
- *                 type: string
- *     responses:
- *       201:
- *         description: variant added
- *       400:
- *         description: validation error
- *       401:
- *         description: unauthorized
- *       403:
- *         description: forbidden
- */
-
-/**
- * @openapi
- * /products/variants/{variantId}:
- *   patch:
- *     tags: [Products]
- *     summary: Update a variant (admin)
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: variantId
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               price:
- *                 type: number
- *               compareAtPrice:
- *                 type: number
- *               image:
- *                 type: string
- *               colorCode:
- *                 type: string
- *               colorName:
- *                 type: string
- *               material:
- *                 type: string
- *     responses:
- *       200:
- *         description: updated
- *       401:
- *         description: unauthorized
- *       403:
- *         description: forbidden
- */
-
-/**
- * @openapi
- * /products/variants/{variantId}/inventory:
- *   patch:
- *     tags: [Products]
- *     summary: Update inventory counts for a variant (admin)
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: variantId
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [quantity]
- *             properties:
- *               quantity:
- *                 type: integer
- *               reserved:
- *                 type: integer
- *     responses:
- *       200:
- *         description: updated
- *       401:
- *         description: unauthorized
- *       403:
- *         description: forbidden
+ *         description: Not Found – product not found
  */

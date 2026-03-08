@@ -1,12 +1,50 @@
 /**
  * @openapi
- * tags:
- *   - name: Auth
- *     description: Authentication
- *   - name: User
- *     description: User profile
- *   - name: Admin
- *     description: Admin operations (users and roles management)
+ * components:
+ *   schemas:
+ *     AuthTokens:
+ *       type: object
+ *       properties:
+ *         accessToken:
+ *           type: string
+ *           description: Short-lived JWT for API requests
+ *           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *         refreshToken:
+ *           type: string
+ *           description: Long-lived token used to obtain a new access token
+ *           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *     UserProfile:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *           example: 550e8400-e29b-41d4-a716-446655440000
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: user@example.com
+ *         username:
+ *           type: string
+ *           example: johndoe
+ *         displayName:
+ *           type: string
+ *           example: John Doe
+ *         roles:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: [user]
+ *     Role:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *           example: 550e8400-e29b-41d4-a716-446655440001
+ *         name:
+ *           type: string
+ *           example: admin
  */
 
 /**
@@ -14,7 +52,8 @@
  * /auth/register:
  *   post:
  *     tags: [Auth]
- *     summary: Register new user
+ *     summary: Register a new user account
+ *     description: Creates a new user and returns JWT tokens so the caller is immediately authenticated.
  *     requestBody:
  *       required: true
  *       content:
@@ -25,9 +64,11 @@
  *             properties:
  *               email:
  *                 type: string
+ *                 format: email
  *                 example: user@example.com
  *               password:
  *                 type: string
+ *                 minLength: 8
  *                 example: SecurePassword123
  *               username:
  *                 type: string
@@ -37,30 +78,28 @@
  *                 example: John Doe
  *     responses:
  *       201:
- *         description: Created
+ *         description: User created – returns profile and JWT tokens
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *                 data:
  *                   type: object
  *                   properties:
  *                     user:
- *                       type: object
- *                       properties:
- *                         id:
- *                           type: string
- *                         email:
- *                           type: string
- *                         username:
- *                           type: string
- *                         displayName:
- *                           type: string
+ *                       $ref: '#/components/schemas/UserProfile'
  *                     accessToken:
  *                       type: string
  *                     refreshToken:
  *                       type: string
+ *       400:
+ *         description: Validation error – missing or invalid fields
+ *       409:
+ *         description: Conflict – email already registered
  */
 
 /**
@@ -68,7 +107,8 @@
  * /auth/login:
  *   post:
  *     tags: [Auth]
- *     summary: Login user and get JWT tokens
+ *     summary: Login and obtain JWT tokens
+ *     description: Authenticates the user with email and password and returns a pair of JWT tokens.
  *     requestBody:
  *       required: true
  *       content:
@@ -79,13 +119,14 @@
  *             properties:
  *               email:
  *                 type: string
+ *                 format: email
  *                 example: admin@admin.com
  *               password:
  *                 type: string
  *                 example: SecurePassword123
  *     responses:
  *       200:
- *         description: OK - Login successful
+ *         description: Login successful
  *         content:
  *           application/json:
  *             schema:
@@ -93,17 +134,13 @@
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 data:
- *                   type: object
- *                   properties:
- *                     accessToken:
- *                       type: string
- *                       description: JWT access token for API requests
- *                     refreshToken:
- *                       type: string
- *                       description: JWT refresh token for getting new access token
+ *                   $ref: '#/components/schemas/AuthTokens'
+ *       400:
+ *         description: Validation error – missing fields
  *       401:
- *         description: Unauthorized - Invalid email or password
+ *         description: Unauthorized – invalid email or password
  */
 
 /**
@@ -111,7 +148,8 @@
  * /auth/refresh:
  *   post:
  *     tags: [Auth]
- *     summary: Refresh access token using refresh token
+ *     summary: Refresh access token
+ *     description: Exchanges a valid refresh token for a new short-lived access token.
  *     requestBody:
  *       required: true
  *       content:
@@ -122,10 +160,10 @@
  *             properties:
  *               refreshToken:
  *                 type: string
- *                 description: Valid refresh token from login
+ *                 description: Refresh token obtained from login or register
  *     responses:
  *       200:
- *         description: OK - New access token generated
+ *         description: New access token issued
  *         content:
  *           application/json:
  *             schema:
@@ -133,13 +171,16 @@
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 data:
  *                   type: object
  *                   properties:
  *                     accessToken:
  *                       type: string
+ *       400:
+ *         description: Validation error – refreshToken missing
  *       401:
- *         description: Unauthorized - Invalid or expired refresh token
+ *         description: Unauthorized – invalid or expired refresh token
  */
 
 /**
@@ -147,12 +188,24 @@
  * /me:
  *   get:
  *     tags: [User]
- *     summary: Get current user profile
+ *     summary: Get the authenticated user's profile
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: OK
+ *         description: Current user profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/UserProfile'
+ *       401:
+ *         description: Unauthorized – no valid token
  */
 
 /**
@@ -160,7 +213,7 @@
  * /me/profile:
  *   patch:
  *     tags: [User]
- *     summary: Update profile
+ *     summary: Update the authenticated user's profile
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -172,11 +225,29 @@
  *             properties:
  *               username:
  *                 type: string
+ *                 example: johndoe
  *               displayName:
  *                 type: string
+ *                 example: John Doe
  *     responses:
  *       200:
- *         description: OK
+ *         description: Profile updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/UserProfile'
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized – no valid token
+ *       409:
+ *         description: Conflict – username already taken
  */
 
 /**
@@ -184,7 +255,7 @@
  * /me/password:
  *   patch:
  *     tags: [User]
- *     summary: Change password
+ *     summary: Change the authenticated user's password
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -197,11 +268,26 @@
  *             properties:
  *               oldPassword:
  *                 type: string
+ *                 description: Current password
  *               newPassword:
  *                 type: string
+ *                 minLength: 8
+ *                 description: New password (minimum 8 characters)
  *     responses:
  *       200:
- *         description: OK
+ *         description: Password changed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Validation error – fields missing or too short
+ *       401:
+ *         description: Unauthorized – wrong current password or no token
  */
 
 /**
@@ -209,153 +295,13 @@
  * /users:
  *   get:
  *     tags: [Admin]
- *     summary: List all users (Admin only)
+ *     summary: List all users (admin only)
+ *     description: Returns every registered user with their assigned roles. Requires the **admin** role.
  *     security:
  *       - bearerAuth: []
- *     description: Requires 'admin' role
  *     responses:
  *       200:
- *         description: OK - List of all users with their roles
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                         example: "550e8400-e29b-41d4-a716-446655440000"
- *                       email:
- *                         type: string
- *                         example: "user@example.com"
- *                       displayName:
- *                         type: string
- *                         example: "John Doe"
- *                       username:
- *                         type: string
- *                         example: "johndoe"
- *                       roles:
- *                         type: array
- *                         items:
- *                           type: string
- *                         example: ["admin", "moderator"]
- *       401:
- *         description: Unauthorized - No valid token provided
- *       403:
- *         description: Forbidden - User does not have 'admin' role
- */
-
-/**
- * @openapi
- * /users/roles:
- *   get:
- *     tags: [Admin]
- *     summary: List all available roles (Admin only)
- *     security:
- *       - bearerAuth: []
- *     description: Requires 'admin' role. Returns all system roles.
- *     responses:
- *       200:
- *         description: OK - List of all roles
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                         format: uuid
- *                       name:
- *                         type: string
- *                   example:
- *                     - id: "550e8400-e29b-41d4-a716-446655440001"
- *                       name: "admin"
- *                     - id: "550e8400-e29b-41d4-a716-446655440002"
- *                       name: "moderator"
- *       401:
- *         description: Unauthorized - No valid token provided
- *       403:
- *         description: Forbidden - User does not have 'admin' role
- *   post:
- *     tags: [Admin]
- *     summary: Create new role (Admin only)
- *     security:
- *       - bearerAuth: []
- *     description: Requires 'admin' role. Creates a new system role.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [name]
- *             properties:
- *               name:
- *                 type: string
- *                 example: moderator
- *                 description: Unique role name
- *     responses:
- *       201:
- *         description: Created - Role created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                       format: uuid
- *                     name:
- *                       type: string
- *       400:
- *         description: Bad Request - Invalid role data
- *       401:
- *         description: Unauthorized - No valid token provided
- *       403:
- *         description: Forbidden - User does not have 'admin' role
- *       409:
- *         description: Conflict - Role already exists
- */
-
-/**
- * @openapi
- * /users/{userId}/roles:
- *   get:
- *     tags: [Admin]
- *     summary: Get user's roles (Admin only)
- *     security:
- *       - bearerAuth: []
- *     description: Requires 'admin' role. Returns all roles assigned to a specific user.
- *     parameters:
- *       - in: path
- *         name: userId
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *           example: "550e8400-e29b-41d4-a716-446655440000"
- *         description: The user ID
- *     responses:
- *       200:
- *         description: OK - User's roles retrieved successfully
+ *         description: List of users
  *         content:
  *           application/json:
  *             schema:
@@ -367,42 +313,47 @@
  *                 data:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                         format: uuid
- *                       name:
- *                         type: string
- *                   example:
- *                     - id: "550e8400-e29b-41d4-a716-446655440001"
- *                       name: "admin"
+ *                     $ref: '#/components/schemas/UserProfile'
  *       401:
- *         description: Unauthorized - No valid token provided
+ *         description: Unauthorized – no valid token
  *       403:
- *         description: Forbidden - User does not have 'admin' role
- *       404:
- *         description: Not Found - User not found
+ *         description: Forbidden – requires admin role
  */
 
 /**
  * @openapi
- * /users/roles/{roleId}:
- *   put:
+ * /users/roles:
+ *   get:
  *     tags: [Admin]
- *     summary: Update role (Admin only)
+ *     summary: List all roles (admin only)
+ *     description: Returns every role defined in the system. Requires the **admin** role.
  *     security:
  *       - bearerAuth: []
- *     description: Requires 'admin' role. Updates an existing role's name.
- *     parameters:
- *       - in: path
- *         name: roleId
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *           example: "550e8400-e29b-41d4-a716-446655440001"
- *         description: The role ID to update
+ *     responses:
+ *       200:
+ *         description: List of roles
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Role'
+ *       401:
+ *         description: Unauthorized – no valid token
+ *       403:
+ *         description: Forbidden – requires admin role
+ *   post:
+ *     tags: [Admin]
+ *     summary: Create a new role (admin only)
+ *     description: Adds a new role to the system. Role names must be unique. Requires the **admin** role.
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -413,11 +364,11 @@
  *             properties:
  *               name:
  *                 type: string
- *                 example: "moderator"
- *                 description: New role name (must be unique)
+ *                 example: moderator
+ *                 description: Unique role identifier
  *     responses:
- *       200:
- *         description: OK - Role updated successfully
+ *       201:
+ *         description: Role created
  *         content:
  *           application/json:
  *             schema:
@@ -425,30 +376,28 @@
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                       format: uuid
- *                     name:
- *                       type: string
+ *                   $ref: '#/components/schemas/Role'
  *       400:
- *         description: Bad Request - Invalid request data
+ *         description: Validation error – name missing or invalid
  *       401:
- *         description: Unauthorized - No valid token provided
+ *         description: Unauthorized – no valid token
  *       403:
- *         description: Forbidden - User does not have 'admin' role
- *       404:
- *         description: Not Found - Role not found
+ *         description: Forbidden – requires admin role
  *       409:
- *         description: Conflict - Role name already exists
- *   delete:
+ *         description: Conflict – role with this name already exists
+ */
+
+/**
+ * @openapi
+ * /users/roles/{roleId}:
+ *   put:
  *     tags: [Admin]
- *     summary: Delete role (Admin only)
+ *     summary: Update a role (admin only)
+ *     description: Renames an existing role. The new name must be unique. Requires the **admin** role.
  *     security:
  *       - bearerAuth: []
- *     description: Requires 'admin' role. Deletes a role from the system.
  *     parameters:
  *       - in: path
  *         name: roleId
@@ -456,11 +405,23 @@
  *         schema:
  *           type: string
  *           format: uuid
- *           example: "550e8400-e29b-41d4-a716-446655440001"
- *         description: The role ID to delete
+ *           example: 550e8400-e29b-41d4-a716-446655440001
+ *         description: ID of the role to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: moderator
+ *                 description: New unique name for the role
  *     responses:
  *       200:
- *         description: OK - Role deleted successfully
+ *         description: Role updated
  *         content:
  *           application/json:
  *             schema:
@@ -468,23 +429,62 @@
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Role'
+ *       400:
+ *         description: Validation error
  *       401:
- *         description: Unauthorized - No valid token provided
+ *         description: Unauthorized – no valid token
  *       403:
- *         description: Forbidden - User does not have 'admin' role
+ *         description: Forbidden – requires admin role
  *       404:
- *         description: Not Found - Role not found
+ *         description: Not Found – role not found
+ *       409:
+ *         description: Conflict – role name already taken
+ *   delete:
+ *     tags: [Admin]
+ *     summary: Delete a role (admin only)
+ *     description: Permanently removes a role from the system. Requires the **admin** role.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: 550e8400-e29b-41d4-a716-446655440001
+ *         description: ID of the role to delete
+ *     responses:
+ *       200:
+ *         description: Role deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *       401:
+ *         description: Unauthorized – no valid token
+ *       403:
+ *         description: Forbidden – requires admin role
+ *       404:
+ *         description: Not Found – role not found
  */
 
 /**
  * @openapi
  * /users/{userId}/roles:
- *   post:
+ *   get:
  *     tags: [Admin]
- *     summary: Assign role to user (Admin only)
+ *     summary: Get a user's roles (admin only)
+ *     description: Returns all roles currently assigned to a specific user. Requires the **admin** role.
  *     security:
  *       - bearerAuth: []
- *     description: Requires 'admin' role. Assigns an existing role to a user.
  *     parameters:
  *       - in: path
  *         name: userId
@@ -492,8 +492,44 @@
  *         schema:
  *           type: string
  *           format: uuid
- *           example: "550e8400-e29b-41d4-a716-446655440000"
- *         description: The target user ID
+ *           example: 550e8400-e29b-41d4-a716-446655440000
+ *         description: ID of the target user
+ *     responses:
+ *       200:
+ *         description: User's roles
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Role'
+ *       401:
+ *         description: Unauthorized – no valid token
+ *       403:
+ *         description: Forbidden – requires admin role
+ *       404:
+ *         description: Not Found – user not found
+ *   post:
+ *     tags: [Admin]
+ *     summary: Assign a role to a user (admin only)
+ *     description: Grants an existing role to the specified user. Requires the **admin** role.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: 550e8400-e29b-41d4-a716-446655440000
+ *         description: ID of the target user
  *     requestBody:
  *       required: true
  *       content:
@@ -504,11 +540,11 @@
  *             properties:
  *               roleName:
  *                 type: string
- *                 example: "admin"
- *                 description: The role name to assign (must exist)
+ *                 example: admin
+ *                 description: Name of the role to assign
  *     responses:
  *       200:
- *         description: OK - Role assigned successfully
+ *         description: Role assigned successfully
  *         content:
  *           application/json:
  *             schema:
@@ -516,18 +552,17 @@
  *               properties:
  *                 success:
  *                   type: boolean
- *                 message:
- *                   type: string
+ *                   example: true
  *       400:
- *         description: Bad Request - Invalid request data
+ *         description: Validation error
  *       401:
- *         description: Unauthorized - No valid token provided
+ *         description: Unauthorized – no valid token
  *       403:
- *         description: Forbidden - User does not have 'admin' role
+ *         description: Forbidden – requires admin role
  *       404:
- *         description: Not Found - User or role not found
+ *         description: Not Found – user or role not found
  *       409:
- *         description: Conflict - User already has this role
+ *         description: Conflict – user already has this role
  */
 
 /**
@@ -535,10 +570,10 @@
  * /users/{userId}/roles/{roleName}:
  *   delete:
  *     tags: [Admin]
- *     summary: Remove role from user (Admin only)
+ *     summary: Remove a role from a user (admin only)
+ *     description: Revokes the specified role from the user. Requires the **admin** role.
  *     security:
  *       - bearerAuth: []
- *     description: Requires 'admin' role. Removes a role from a user.
  *     parameters:
  *       - in: path
  *         name: userId
@@ -546,18 +581,18 @@
  *         schema:
  *           type: string
  *           format: uuid
- *           example: "550e8400-e29b-41d4-a716-446655440000"
- *         description: The target user ID
+ *           example: 550e8400-e29b-41d4-a716-446655440000
+ *         description: ID of the target user
  *       - in: path
  *         name: roleName
  *         required: true
  *         schema:
  *           type: string
- *           example: "admin"
- *         description: The role name to remove
+ *           example: admin
+ *         description: Name of the role to remove
  *     responses:
  *       200:
- *         description: OK - Role removed successfully
+ *         description: Role removed successfully
  *         content:
  *           application/json:
  *             schema:
@@ -565,13 +600,12 @@
  *               properties:
  *                 success:
  *                   type: boolean
- *                 message:
- *                   type: string
+ *                   example: true
  *       401:
- *         description: Unauthorized - No valid token provided
+ *         description: Unauthorized – no valid token
  *       403:
- *         description: Forbidden - User does not have 'admin' role
+ *         description: Forbidden – requires admin role
  *       404:
- *         description: Not Found - User or role not found
+ *         description: Not Found – user or role not found
  */
 export {};

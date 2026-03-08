@@ -1,8 +1,30 @@
 /**
  * @openapi
- * tags:
- *   - name: Categories
- *     description: Product categories management
+ * components:
+ *   schemas:
+ *     Category:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *           example: 550e8400-e29b-41d4-a716-446655440010
+ *         name:
+ *           type: string
+ *           example: Sofas
+ *         slug:
+ *           type: string
+ *           example: sofas
+ *         image:
+ *           type: string
+ *           nullable: true
+ *           example: https://example.com/images/sofas.jpg
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
  */
 
 /**
@@ -11,27 +33,34 @@
  *   get:
  *     tags: [Categories]
  *     summary: List all categories
+ *     description: Returns a paginated list of product categories. Public endpoint.
  *     parameters:
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
  *           default: 20
- *         description: Number of items to return
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Maximum number of items to return
  *       - in: query
  *         name: offset
  *         schema:
  *           type: integer
  *           default: 0
- *         description: Number of items to skip
+ *           minimum: 0
+ *         description: Number of items to skip (for pagination)
  *     responses:
  *       200:
- *         description: List of categories
+ *         description: Paginated list of categories
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *                 data:
  *                   type: object
  *                   properties:
@@ -41,14 +70,17 @@
  *                         $ref: '#/components/schemas/Category'
  *                     total:
  *                       type: integer
+ *                       example: 10
  *                     limit:
  *                       type: integer
+ *                       example: 20
  *                     offset:
  *                       type: integer
- *
+ *                       example: 0
  *   post:
  *     tags: [Categories]
- *     summary: Create a new category
+ *     summary: Create a new category (admin only)
+ *     description: Creates a category. The slug is automatically generated from the name. Requires the **admin** role.
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -62,11 +94,13 @@
  *               name:
  *                 type: string
  *                 minLength: 2
- *                 description: Category name. Slug will be automatically generated from this.
+ *                 example: Armchairs
+ *                 description: Category name. Slug will be auto-generated from this value.
  *               image:
  *                 type: string
  *                 nullable: true
- *                 description: Category image URL (optional)
+ *                 example: https://example.com/images/armchairs.jpg
+ *                 description: Optional URL for the category image
  *     responses:
  *       201:
  *         description: Category created
@@ -75,16 +109,19 @@
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *                 data:
  *                   $ref: '#/components/schemas/Category'
  *       400:
- *         description: Validation error
+ *         description: Validation error – name too short or missing
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized – no valid token
  *       403:
- *         description: Forbidden (admin only)
+ *         description: Forbidden – requires admin role
  *       409:
- *         description: Category already exists
+ *         description: Conflict – category with this name already exists
  */
 
 /**
@@ -92,7 +129,8 @@
  * /categories/{id}:
  *   get:
  *     tags: [Categories]
- *     summary: Get category by ID
+ *     summary: Get a category by ID
+ *     description: Returns a single category by its UUID. Public endpoint.
  *     parameters:
  *       - in: path
  *         name: id
@@ -100,6 +138,7 @@
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: 550e8400-e29b-41d4-a716-446655440010
  *     responses:
  *       200:
  *         description: Category details
@@ -108,14 +147,17 @@
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *                 data:
  *                   $ref: '#/components/schemas/Category'
  *       404:
- *         description: Category not found
- *
+ *         description: Not Found – category not found
  *   patch:
  *     tags: [Categories]
- *     summary: Update a category
+ *     summary: Update a category (admin only)
+ *     description: Updates category fields. If the name is changed the slug is regenerated. Requires the **admin** role.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -125,6 +167,7 @@
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: 550e8400-e29b-41d4-a716-446655440010
  *     requestBody:
  *       required: true
  *       content:
@@ -135,11 +178,12 @@
  *               name:
  *                 type: string
  *                 minLength: 2
- *                 description: Category name. If provided, slug will be automatically regenerated from the new name.
+ *                 example: Armchairs & Recliners
+ *                 description: New name. Slug will be regenerated if this is changed.
  *               image:
  *                 type: string
  *                 nullable: true
- *                 description: Category image URL (optional)
+ *                 example: https://example.com/images/new.jpg
  *     responses:
  *       200:
  *         description: Category updated
@@ -148,22 +192,25 @@
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *                 data:
  *                   $ref: '#/components/schemas/Category'
  *       400:
  *         description: Validation error
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized – no valid token
  *       403:
- *         description: Forbidden (admin only)
+ *         description: Forbidden – requires admin role
  *       404:
- *         description: Category not found
+ *         description: Not Found – category not found
  *       409:
- *         description: Category with same name/slug exists
- *
+ *         description: Conflict – another category with this name already exists
  *   delete:
  *     tags: [Categories]
- *     summary: Delete a category
+ *     summary: Delete a category (admin only)
+ *     description: Permanently removes a category. Requires the **admin** role.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -173,15 +220,24 @@
  *         schema:
  *           type: string
  *           format: uuid
+ *           example: 550e8400-e29b-41d4-a716-446655440010
  *     responses:
  *       200:
  *         description: Category deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized – no valid token
  *       403:
- *         description: Forbidden (admin only)
+ *         description: Forbidden – requires admin role
  *       404:
- *         description: Category not found
+ *         description: Not Found – category not found
  */
 
 /**
@@ -189,13 +245,15 @@
  * /categories/by-slug/{slug}:
  *   get:
  *     tags: [Categories]
- *     summary: Get category by slug
+ *     summary: Get a category by slug
+ *     description: Returns a single category looked up by its URL-friendly slug. Public endpoint.
  *     parameters:
  *       - in: path
  *         name: slug
  *         required: true
  *         schema:
  *           type: string
+ *           example: sofas
  *     responses:
  *       200:
  *         description: Category details
@@ -204,40 +262,11 @@
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *                 data:
  *                   $ref: '#/components/schemas/Category'
  *       404:
- *         description: Category not found
- */
-
-/**
- * @openapi
- * components:
- *   securitySchemes:
- *     bearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
- *       description: JWT Bearer token required for authenticated endpoints
- *
- *   schemas:
- *     Category:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *           format: uuid
- *         name:
- *           type: string
- *         slug:
- *           type: string
- *         image:
- *           type: string
- *           nullable: true
- *         createdAt:
- *           type: string
- *           format: date-time
- *         updatedAt:
- *           type: string
- *           format: date-time
+ *         description: Not Found – no category with this slug
  */
