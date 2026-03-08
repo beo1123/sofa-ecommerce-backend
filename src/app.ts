@@ -12,6 +12,8 @@ import { createProductVariantRouter } from './modules/product-variant/interface/
 import { createCouponRouter } from './modules/coupon/interface/coupon.routes.js';
 import { createReviewRouter } from './modules/review/interface/review.routes.js';
 import { createWishlistRouter } from './modules/wishlist/interface/wishlist.routes.js';
+import { createArticleRouter } from './modules/article/interface/article.routes.js';
+import { createReturnRequestRouter } from './modules/return-request/interface/return-request.routes.js';
 import { errorHandler } from './shared/http/error-handler.js';
 
 export function createApp() {
@@ -55,6 +57,8 @@ export function createApp() {
   apiV1.use('/coupons', createCouponRouter());
   apiV1.use('/reviews', createReviewRouter());
   apiV1.use('/wishlist', createWishlistRouter());
+  apiV1.use('/articles', createArticleRouter());
+  apiV1.use('/returns', createReturnRequestRouter());
   app.use('/api/v1', apiV1);
 
   // ─────────────────────────────────────────────
