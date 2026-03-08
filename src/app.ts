@@ -9,6 +9,13 @@ import { createProductRouter } from './modules/product/interface/product.routes.
 import { createProductStatusRouter } from './modules/product-status/interface/product-status.routes.js';
 import { createProductImageRouter } from './modules/product-image/interface/product-image.routes.js';
 import { createProductVariantRouter } from './modules/product-variant/interface/product-variant.routes.js';
+import { createCouponRouter } from './modules/coupon/interface/coupon.routes.js';
+import { createReviewRouter } from './modules/review/interface/review.routes.js';
+import { createWishlistRouter } from './modules/wishlist/interface/wishlist.routes.js';
+import { createArticleRouter } from './modules/article/interface/article.routes.js';
+import { createReturnRequestRouter } from './modules/return-request/interface/return-request.routes.js';
+import { createAddressRouter } from './modules/address/interface/address.routes.js';
+import { createOrderRouter } from './modules/order/interface/order.routes.js';
 import { errorHandler } from './shared/http/error-handler.js';
 
 export function createApp() {
@@ -49,6 +56,13 @@ export function createApp() {
   apiV1.use('/products/images', createProductImageRouter());
   apiV1.use('/products/variants', createProductVariantRouter());
   apiV1.use('/products', createProductRouter());
+  apiV1.use('/coupons', createCouponRouter());
+  apiV1.use('/reviews', createReviewRouter());
+  apiV1.use('/wishlist', createWishlistRouter());
+  apiV1.use('/articles', createArticleRouter());
+  apiV1.use('/returns', createReturnRequestRouter());
+  apiV1.use('/addresses', createAddressRouter());
+  apiV1.use('/orders', createOrderRouter());
   app.use('/api/v1', apiV1);
 
   // ─────────────────────────────────────────────
