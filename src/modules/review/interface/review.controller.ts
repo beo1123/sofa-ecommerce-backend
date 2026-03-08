@@ -32,7 +32,7 @@ export class ReviewController extends BaseController {
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
     const offset = parseInt(req.query.offset as string) || 0;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await this.myReviewsUC.execute((req as any).user.id, limit, offset);
+    const result = await this.myReviewsUC.execute((req as any).user.sub, limit, offset);
     res.json(ok(result));
   };
 
@@ -46,7 +46,7 @@ export class ReviewController extends BaseController {
     const input = schema.parse(req.body);
     const result = await this.createUC.execute({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      userId: (req as any).user.id,
+      userId: (req as any).user.sub,
       ...input,
     });
     res.status(201).json(ok(result));
@@ -60,15 +60,17 @@ export class ReviewController extends BaseController {
     });
     const input = schema.parse(req.body);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await this.updateUC.execute(req.params.id, (req as any).user.id, input);
+    const result = await this.updateUC.execute(req.params.id, (req as any).user.sub, input);
     res.json(ok(result));
   };
 
   delete = async (req: Request, res: Response) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const user = (req as any).user;
-    const isAdmin = Array.isArray(user.roles) && user.roles.includes('admin');
-    await this.deleteUC.execute(req.params.id, user.id, isAdmin);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const userRoles: string[] = (req as any).userRoles ?? [];
+    const isAdmin = userRoles.map((r: string) => r.toLowerCase()).includes('admin');
+    await this.deleteUC.execute(req.params.id, user.sub, isAdmin);
     res.json(ok({}));
   };
 

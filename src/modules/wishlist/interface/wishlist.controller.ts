@@ -19,7 +19,7 @@ export class WishlistController extends BaseController {
 
   get = async (req: Request, res: Response) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await this.getUC.execute((req as any).user.id);
+    const result = await this.getUC.execute((req as any).user.sub);
     res.json(ok(result));
   };
 
@@ -31,7 +31,7 @@ export class WishlistController extends BaseController {
     const input = schema.parse(req.body);
     const result = await this.addItemUC.execute({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      userId: (req as any).user.id,
+      userId: (req as any).user.sub,
       ...input,
     });
     res.status(201).json(ok(result));
@@ -39,13 +39,13 @@ export class WishlistController extends BaseController {
 
   removeItem = async (req: Request, res: Response) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await this.removeItemUC.execute(req.params.itemId, (req as any).user.id);
+    await this.removeItemUC.execute(req.params.itemId, (req as any).user.sub);
     res.json(ok({}));
   };
 
   clear = async (req: Request, res: Response) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await this.clearUC.execute((req as any).user.id);
+    await this.clearUC.execute((req as any).user.sub);
     res.json(ok({}));
   };
 }
